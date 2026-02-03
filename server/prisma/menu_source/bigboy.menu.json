@@ -1,0 +1,918 @@
+{
+  "source": {
+    "name": "BigBoy.com",
+    "menuUrl": "https://www.bigboy.com/menu",
+    "generatedAt": "2026-02-03T03:33:42.228Z",
+    "notes": [
+      "Data extracted from BigBoy.com menu page wix-warmup-data payload.",
+      "Calories are only captured when a single numeric value is present.",
+      "Prices are not provided by BigBoy.com and are assigned during seeding."
+    ]
+  },
+  "categories": [
+    {
+      "id": "cat-current-promotion",
+      "name": "Current Promotion",
+      "slug": "current-promotion",
+      "description": null,
+      "sortOrder": 1
+    },
+    {
+      "id": "cat-appetizers",
+      "name": "Appetizers",
+      "slug": "appetizers",
+      "description": null,
+      "sortOrder": 2
+    },
+    {
+      "id": "cat-sides-drinks",
+      "name": "Sides + Drinks",
+      "slug": "sides-drinks",
+      "description": null,
+      "sortOrder": 3
+    },
+    {
+      "id": "cat-breakfast",
+      "name": "Breakfast",
+      "slug": "breakfast",
+      "description": null,
+      "sortOrder": 4
+    },
+    {
+      "id": "cat-burgers",
+      "name": "Burgers",
+      "slug": "burgers",
+      "description": null,
+      "sortOrder": 5
+    },
+    {
+      "id": "cat-dinners",
+      "name": "Dinners",
+      "slug": "dinners",
+      "description": null,
+      "sortOrder": 6
+    },
+    {
+      "id": "cat-desserts",
+      "name": "Desserts",
+      "slug": "desserts",
+      "description": null,
+      "sortOrder": 7
+    },
+    {
+      "id": "cat-soups-salads",
+      "name": "Soups + Salads",
+      "slug": "soups-salads",
+      "description": null,
+      "sortOrder": 8
+    },
+    {
+      "id": "cat-sandwiches-and-wraps",
+      "name": "Sandwiches and Wraps",
+      "slug": "sandwiches-and-wraps",
+      "description": null,
+      "sortOrder": 9
+    },
+    {
+      "id": "cat-kids-meals",
+      "name": "Kids' Meals",
+      "slug": "kids-meals",
+      "description": null,
+      "sortOrder": 10
+    }
+  ],
+  "items": [
+    {
+      "id": "item-current-promotion-classic-shakes",
+      "name": "Classic Shakes",
+      "description": "Hand-dipped ice cream blended into a smooth, creamy shake and topped with whipped cream.",
+      "categoryId": "cat-current-promotion",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/f592fd_0be5f01ae5f04611b35c0e67682172dd~mv2.png"
+    },
+    {
+      "id": "item-current-promotion-classic-slim-jim",
+      "name": "Classic Slim Jim®",
+      "description": "Grilled ham, Swiss cheese, tomato, and special sauce on a toasted hoagie roll—pressed until golden and served with crispy fries.",
+      "categoryId": "cat-current-promotion",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_9a7c5826af68430692abf3cb3bf61a6c~mv2.jpg"
+    },
+    {
+      "id": "item-current-promotion-italian-grinder-slim-jim",
+      "name": "Italian Grinder Slim Jim®",
+      "description": "Layers of ham, salami, pepperoni, provolone cheese, tomato, onion, shredded lettuce, and zesty grinder dressing on a toasted hoagie roll, grilled to perfection and served with fries.",
+      "categoryId": "cat-current-promotion",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_0620d5fb7c3444978c3f842b4669b166~mv2.jpg"
+    },
+    {
+      "id": "item-current-promotion-turkey-club-slim-jim",
+      "name": "Turkey Club Slim Jim®",
+      "description": "Sliced grilled turkey, crispy bacon, melted Swiss, lettuce, tomato, and mayo on a pressed hoagie roll, served hot with golden fries.",
+      "categoryId": "cat-current-promotion",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_e0ecc558754842e083702ff613d58132~mv2.jpg"
+    },
+    {
+      "id": "item-appetizers-big-boy-sliders",
+      "name": "Big Boy Sliders",
+      "description": "American cheese, shredded lettuce, our famous big boy sauce on a brioche bun",
+      "categoryId": "cat-appetizers",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_41e5b64b9457467097e3fc05d40a4117~mv2.jpg"
+    },
+    {
+      "id": "item-appetizers-bob-s-sampler",
+      "name": "Bob's Sampler",
+      "description": "Chicken tenders, mozzarella sticks, fried pickles and onion rings served with ranch, marinara and zesty sauce",
+      "categoryId": "cat-appetizers",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/622d65_8c6f466d9dcc485e9142d0b3de9638dc~mv2.png"
+    },
+    {
+      "id": "item-appetizers-dolly-sliders",
+      "name": "Dolly Sliders",
+      "description": "Hand-breaded fried chicken tender, pickles and tartar sauce on a brioche bun",
+      "categoryId": "cat-appetizers",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_0f6110ff1a6847929386725c1b51949c~mv2.jpg"
+    },
+    {
+      "id": "item-appetizers-fried-pickles",
+      "name": "Fried Pickles",
+      "description": "Fried to a perfect golden brown, served with ranch",
+      "categoryId": "cat-appetizers",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/622d65_8c6f466d9dcc485e9142d0b3de9638dc~mv2.png"
+    },
+    {
+      "id": "item-appetizers-loaded-waffle-fries",
+      "name": "Loaded Waffle Fries",
+      "description": "Four cheese sauce and bacon crumbles over waffle fries drizzled with ranch and topped with scallions",
+      "categoryId": "cat-appetizers",
+      "calories": 785,
+      "imageKey": "https://static.wixstatic.com/media/29471e_a965c8e436184011805f527c0cf179cd~mv2.jpg"
+    },
+    {
+      "id": "item-appetizers-mozzarella-sticks",
+      "name": "Mozzarella Sticks",
+      "description": "Aged mozzarella coated in seasoned breadcrumbs and deep-fried to a golden brown, served with choice of marinara or ranch dressing",
+      "categoryId": "cat-appetizers",
+      "calories": 840,
+      "imageKey": "https://static.wixstatic.com/media/622d65_1952ec012d484f77af2c62e590144627~mv2.png"
+    },
+    {
+      "id": "item-appetizers-original-onion-rings",
+      "name": "Original Onion Rings",
+      "description": "Served with zesty sauce",
+      "categoryId": "cat-appetizers",
+      "calories": 720,
+      "imageKey": "https://static.wixstatic.com/media/622d65_4ed90a64ee804a8f96c4dfafa6dce2ba~mv2.jpg"
+    },
+    {
+      "id": "item-appetizers-pretzel-bites",
+      "name": "Pretzel Bites",
+      "description": "Flash fried and lightly salted. Served with four cheese sauce and honey mustard",
+      "categoryId": "cat-appetizers",
+      "calories": 750,
+      "imageKey": "https://static.wixstatic.com/media/622d65_9dee3e885acc4f82a74e27d31504af2a~mv2.png"
+    },
+    {
+      "id": "item-sides-drinks-coleslaw",
+      "name": "Coleslaw",
+      "description": "Creamy and crunchy coleslaw, made with fresh cabbage and a tangy dressing.",
+      "categoryId": "cat-sides-drinks",
+      "calories": 70,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_42350a85d3b443fd831bb2ececb6629f~mv2.jpg"
+    },
+    {
+      "id": "item-sides-drinks-french-fries",
+      "name": "French Fries",
+      "description": "Classic, crispy French fries, a perfect sidekick to any burger or sandwich.",
+      "categoryId": "cat-sides-drinks",
+      "calories": 290,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_88b94b0ed4054ce0bfc36583f0112234~mv2.jpg"
+    },
+    {
+      "id": "item-sides-drinks-fresh-fruit",
+      "name": "Fresh Fruit",
+      "description": "A refreshing bowl of sweet and juicy seasonal fruits for a healthy side option.",
+      "categoryId": "cat-sides-drinks",
+      "calories": 80,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_3cdfc9a6aa4b4f3eba2098f52f73e557~mv2.jpg"
+    },
+    {
+      "id": "item-sides-drinks-hot-beverages",
+      "name": "Hot Beverages",
+      "description": "- Fresh-brewed bottomless big boy® special-blend coffee, regular or decaffeinated | 0 cal - Hot tea | 0 cal",
+      "categoryId": "cat-sides-drinks",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_192bd2db664948799ce4a7ef642b0f14~mv2.jpg"
+    },
+    {
+      "id": "item-sides-drinks-mac-and-cheese",
+      "name": "Mac & Cheese",
+      "description": "Cavatappi noodles covered in our creamy four cheese sauce",
+      "categoryId": "cat-sides-drinks",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/622d65_8c6f466d9dcc485e9142d0b3de9638dc~mv2.png"
+    },
+    {
+      "id": "item-sides-drinks-mashed-potatoes",
+      "name": "Mashed Potatoes",
+      "description": "Creamy and smooth mashed potatoes, topped with rich gravy for a comforting side.",
+      "categoryId": "cat-sides-drinks",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_38558a27656440398fcd8cbb33efc033~mv2.jpg"
+    },
+    {
+      "id": "item-sides-drinks-onion-rings",
+      "name": "Onion Rings",
+      "description": "Crispy, golden onion rings, fried to perfection and full of flavor.",
+      "categoryId": "cat-sides-drinks",
+      "calories": 450,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_7ff2656d300647c889728692c6b267a5~mv2.jpg"
+    },
+    {
+      "id": "item-sides-drinks-seasonal-vegetables",
+      "name": "Seasonal Vegetables",
+      "description": "A vibrant medley of fresh seasonal vegetables, cooked to perfection.",
+      "categoryId": "cat-sides-drinks",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_90461710fe14425d8c19f0b9dc5dc784~mv2.jpg"
+    },
+    {
+      "id": "item-sides-drinks-shakes",
+      "name": "Shakes",
+      "description": "Hand-dipped and served the old fashioned way with a chilled shake tin: - Vanilla | 600 cal - Chocolate | 630 cal - Strawberry | 450 cal - Cookies & Cream | 960 cal - Strawberry Shortcake | 960 cal - Reese's Pieces △ | 895 cal",
+      "categoryId": "cat-sides-drinks",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/622d65_0ba854645c4b4d8db8569a3059dbb02c~mv2.jpg"
+    },
+    {
+      "id": "item-sides-drinks-side-caesar-salad",
+      "name": "Side Caesar Salad",
+      "description": "Crisp romaine lettuce, topped with croutons and creamy Caesar dressing, a classic addition to any meal.",
+      "categoryId": "cat-sides-drinks",
+      "calories": 300,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_7bc0c71b72f0422e9dd16b8f59891e7c~mv2.jpg"
+    },
+    {
+      "id": "item-sides-drinks-side-house-salad",
+      "name": "Side House Salad",
+      "description": "A fresh mix of greens, vegetables, and toppings for a light and satisfying side.",
+      "categoryId": "cat-sides-drinks",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_aab8e1ce71d44398a1dac8ee69668a73~mv2.jpg"
+    },
+    {
+      "id": "item-sides-drinks-waffle-fries",
+      "name": "Waffle Fries",
+      "description": "Crispy and golden waffle-cut fries, perfect for dipping or enjoying on their own.",
+      "categoryId": "cat-sides-drinks",
+      "calories": 470,
+      "imageKey": "https://static.wixstatic.com/media/29471e_f6f21e134ee149729cd5186ef298e60b~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-apple-cinnamon-waffle",
+      "name": "Apple Cinnamon Waffle",
+      "description": "Malted waffle topped with warm cinnamon apples and whipped cream",
+      "categoryId": "cat-breakfast",
+      "calories": 685,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_72f84968810142218ac37eeeaddff05f~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-bacon",
+      "name": "Bacon",
+      "description": "Crispy and smoky, our bacon is the perfect breakfast treat.",
+      "categoryId": "cat-breakfast",
+      "calories": 200,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_4d81899aa6c44f4cbf9db9e71e86a213~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-biscuits-and-gravy",
+      "name": "Biscuits & Gravy",
+      "description": "Warm buttermilk biscuits topped with country sausage gravy",
+      "categoryId": "cat-breakfast",
+      "calories": 610,
+      "imageKey": "https://static.wixstatic.com/media/622d65_5ebbc5d5356a433d886586ec875df862~mv2.png"
+    },
+    {
+      "id": "item-breakfast-breakfast-burrito",
+      "name": "Breakfast Burrito",
+      "description": "Bacon, sausage, scrambled eggs, american cheese hash browns and chipotle sauce wrapped in a warm tortilla",
+      "categoryId": "cat-breakfast",
+      "calories": 895,
+      "imageKey": "https://static.wixstatic.com/media/622d65_5a66443d4a9549328406f29954bf36f9~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-chicken-and-waffle",
+      "name": "Chicken & Waffle",
+      "description": "Two hand-breaded chicken tenders served on top of a malted waffle with butter and syrup, topped with powdered sugar",
+      "categoryId": "cat-breakfast",
+      "calories": 820,
+      "imageKey": "https://static.wixstatic.com/media/622d65_17c59c614f2a4bb8bc8f1edcc0634d07~mv2.png"
+    },
+    {
+      "id": "item-breakfast-chicken-sausage",
+      "name": "Chicken Sausage",
+      "description": "A flavorful and lean option, our chicken sausage is packed with protein and seasoned to perfection.",
+      "categoryId": "cat-breakfast",
+      "calories": 160,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_153389f746b54714a360c5b91c3148b6~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-cinnamon-french-toast",
+      "name": "Cinnamon French Toast",
+      "description": "Thick slices of cinnamon swirl bread battered in our signature french toast dip, dusted with cinnamon sugar and topped with whipped cream and caramel sauce, served with syrup, topped with powdered sugar",
+      "categoryId": "cat-breakfast",
+      "calories": 530,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_b516fc1656c74757aa869bf3a152d2d1~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-classic-blockbuster",
+      "name": "Classic Blockbuster",
+      "description": "Two farm fresh eggs, two bacon strips, and two sausage links, served with hash browns or fresh fruit and choice of toast, hotcakes or biscuits",
+      "categoryId": "cat-breakfast",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_3e5a07ec85a5484db0dd11ee98169978~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-classic-french-toast",
+      "name": "Classic French Toast",
+      "description": "Thick slices of texas toast battered in our signature french toast dip, served with butter and syrup, topped with powdered sugar",
+      "categoryId": "cat-breakfast",
+      "calories": 290,
+      "imageKey": "https://static.wixstatic.com/media/622d65_d7a4df33345b4125a32bd203bb35a787~mv2.png"
+    },
+    {
+      "id": "item-breakfast-cookies-and-cream-hotcakes",
+      "name": "Cookies & Cream Hotcakes",
+      "description": "Our original recipe vanilla hotcakes filled with OREO® cookies and topped with vanilla cream icing, whipped cream and OREO® cookie crumbles",
+      "categoryId": "cat-breakfast",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_ba83dffda52e49f0ac93ca0212859f7d~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-corned-beef-scramble",
+      "name": "Corned Beef Scramble",
+      "description": "Three farm fresh eggs, corned beef, green pepper and onion served over hash browns",
+      "categoryId": "cat-breakfast",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/622d65_8c6f466d9dcc485e9142d0b3de9638dc~mv2.png"
+    },
+    {
+      "id": "item-breakfast-country-fried-steak-and-eggs",
+      "name": "Country Fried Steak & Eggs",
+      "description": "Two farm fresh eggs, country fried steak topped with country sausage gravy, served with hash browns or fresh fruit and choice of toast, hotcakes, or biscuits",
+      "categoryId": "cat-breakfast",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_76f8a2525a5c4f3aa89668fd2d10645f~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-egg-whites",
+      "name": "Egg Whites",
+      "description": "Fluffy and light, these egg whites are perfect for a healthy, protein-packed breakfast.",
+      "categoryId": "cat-breakfast",
+      "calories": 120,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_1927bd06fc4d4d6286536f89d1a9fd6d~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-eggs-and-meat",
+      "name": "Eggs & Meat",
+      "description": "Two farm fresh eggs, choice of bacon or sausage, choice of toast, hotcakes, or fresh fruit",
+      "categoryId": "cat-breakfast",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_c073bc3287f944b8bc52bd1a0775731e~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-eggs-any-style",
+      "name": "Eggs Any Style",
+      "description": "Get your eggs just the way you like them, whether scrambled, fried, or sunny side up.",
+      "categoryId": "cat-breakfast",
+      "calories": 210,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_72f36b4f69904fb3b5bfdb6b117a5d90~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-farmers-omelette",
+      "name": "Farmers Omelette",
+      "description": "Three farm fresh eggs, ham, onion, hash browns and American cheese",
+      "categoryId": "cat-breakfast",
+      "calories": 500,
+      "imageKey": "https://static.wixstatic.com/media/622d65_4f24de4533f247f3a5680bbcb2649d01~mv2.png"
+    },
+    {
+      "id": "item-breakfast-french-toast-and-meat",
+      "name": "French Toast & Meat",
+      "description": "One slice of thick cut french toast with choice of bacon or sausage",
+      "categoryId": "cat-breakfast",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_6c6793b3730e40f58a23543f24ca0d01~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-fresh-fruit",
+      "name": "Fresh Fruit",
+      "description": "A refreshing mix of juicy seasonal fruits, perfect for a light and healthy side.",
+      "categoryId": "cat-breakfast",
+      "calories": 70,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_3cdfc9a6aa4b4f3eba2098f52f73e557~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-hash-browns",
+      "name": "Hash Browns",
+      "description": "Crispy and golden, our hash browns are the perfect addition to your breakfast plate.",
+      "categoryId": "cat-breakfast",
+      "calories": 150,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_157bf034cf3241dcb37362dc6511d817~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-hotcakes-and-meat",
+      "name": "Hotcakes & Meat",
+      "description": "Two original recipe vanilla hotcakes with choice of bacon or sausage",
+      "categoryId": "cat-breakfast",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_b3532a32a70348f68e19a3957ff8bacb~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-malted-waffle",
+      "name": "Malted Waffle",
+      "description": "Served with butter and syrup, topped with powdered sugar",
+      "categoryId": "cat-breakfast",
+      "calories": 380,
+      "imageKey": "https://static.wixstatic.com/media/622d65_6bf1184b7786442a95373bb594205e10~mv2.png"
+    },
+    {
+      "id": "item-breakfast-meat-lovers-omelette",
+      "name": "Meat Lovers Omelette",
+      "description": "Three farm fresh eggs, bacon, sausage, ham and cheddar",
+      "categoryId": "cat-breakfast",
+      "calories": 830,
+      "imageKey": "https://static.wixstatic.com/media/622d65_79d41923b93c481c8dc0d8e0c05905d3~mv2.png"
+    },
+    {
+      "id": "item-breakfast-multigrain-hotcakes-and-meat",
+      "name": "Multigrain Hotcakes & Meat",
+      "description": "Two multigrain hotcakes topped with seasonal berries, served with choice of bacon or sausage",
+      "categoryId": "cat-breakfast",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_a117b20f77f84b59ac40aadcdc523b22~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-mushroom-swiss-scramble",
+      "name": "Mushroom Swiss Scramble",
+      "description": "Three farm fresh eggs, caramelized onion, mushroom, spinach, and Swiss cheese served over hash browns. Choice of toast, hotcakes, or biscuits",
+      "categoryId": "cat-breakfast",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_7d1eac9913f64e309a26c87135139a07~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-original-hotcakes",
+      "name": "Original Hotcakes",
+      "description": "Our original recipe vanilla hotcakes served with butter and syrup",
+      "categoryId": "cat-breakfast",
+      "calories": 870,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_a36a78e0bf874138ab97eff4c63064da~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-philly-cheesesteak-scramble",
+      "name": "Philly Cheesesteak Scramble",
+      "description": "Three farm fresh eggs, seasoned shaved steak, green pepper, onion, mushroom and cheddar served over hash browns. choice of toast, hotcakes, or biscuits",
+      "categoryId": "cat-breakfast",
+      "calories": 660,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_4496f9d0a7724a549fc383e04886f0fa~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-sausage-links",
+      "name": "Sausage Links",
+      "description": "Deliciously juicy sausage links, offering a classic taste with every bite.",
+      "categoryId": "cat-breakfast",
+      "calories": 330,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_1370de57a8494322bdac43f9e8f4a237~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-sausage-patties",
+      "name": "Sausage Patties",
+      "description": "Savory and satisfying, our sausage patties are made with high-quality pork.",
+      "categoryId": "cat-breakfast",
+      "calories": 330,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_5aae820e72a64cb9be9c2b0bf6d3749e~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-southern-omelette",
+      "name": "Southern Omelette",
+      "description": "Country sausage, American cheese, hash browns, and onion topped with country sausage gravy",
+      "categoryId": "cat-breakfast",
+      "calories": 810,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_48bea6163ec644648b9959e2d59e840a~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-strawberry-waffle",
+      "name": "Strawberry Waffle",
+      "description": "Malted waffle with fresh strawberries, strawberry topping, and whipped cream",
+      "categoryId": "cat-breakfast",
+      "calories": 580,
+      "imageKey": "https://static.wixstatic.com/media/622d65_bbe37d7de6a9447ea5a2381126035ece~mv2.png"
+    },
+    {
+      "id": "item-breakfast-the-works-scramble",
+      "name": "The Works Scramble",
+      "description": "Three farm fresh eggs, sausage, ham, bacon, onion, mushroom, tomato and cheddar served over hash browns. Choice of toast, hotcakes, or biscuits",
+      "categoryId": "cat-breakfast",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_f6df3b9c3ced4a9d90fc005b5a1bdbdb~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-toast",
+      "name": "Toast",
+      "description": "Crispy golden toast slices, perfect with butter or your favorite spread.",
+      "categoryId": "cat-breakfast",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_edf0a2ea72bc48e4b689d69fbf201e8f~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-very-berry-multigrain-hotcakes",
+      "name": "Very Berry Multigrain Hotcakes",
+      "description": "Made with almonds, walnuts, rolled oats and buttermilk and topped with seasonal berries",
+      "categoryId": "cat-breakfast",
+      "calories": 850,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_ac10e2008e534dbaa6617725e0ebb958~mv2.jpg"
+    },
+    {
+      "id": "item-breakfast-very-veggie-omelette",
+      "name": "Very Veggie Omelette",
+      "description": "Three farm fresh eggs, onion, green pepper, tomato, mushroom and cheddar",
+      "categoryId": "cat-breakfast",
+      "calories": 540,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_d7c36857df1b497999b17cd24c1a0505~mv2.jpg"
+    },
+    {
+      "id": "item-burger-bbq-bacon-cheeseburger",
+      "name": "BBQ Bacon Cheeseburger",
+      "description": "American cheese, bacon, onion rings and barbeque sauce on a grilled brioche bun",
+      "categoryId": "cat-burgers",
+      "calories": 1020,
+      "imageKey": "https://static.wixstatic.com/media/622d65_d8742d4edec44a039768116b61840c68~mv2.png"
+    },
+    {
+      "id": "item-burger-best-cheeseburger-on-the-planet",
+      "name": "Best Cheeseburger on the Planet®",
+      "description": "American cheese, tomato, red onion, pickles, shredded lettuce, mayo, mustard and red relish on a grilled brioche bun",
+      "categoryId": "cat-burgers",
+      "calories": 900,
+      "imageKey": "https://static.wixstatic.com/media/622d65_533cb989e8994f16adb6ee35bd4b0d88~mv2.jpg"
+    },
+    {
+      "id": "item-burger-big-boy",
+      "name": "Big Boy®",
+      "description": "American cheese, shredded lettuce and our famous big boy sauce on a sesame seed bun",
+      "categoryId": "cat-burgers",
+      "calories": 575,
+      "imageKey": "https://static.wixstatic.com/media/622d65_060ac3f79f8d447095e1c1bc1d9370d1~mv2.jpg"
+    },
+    {
+      "id": "item-burger-bob-s-bacon-cheeseburger-double-or-triple",
+      "name": "Bob's Bacon Cheeseburger - Double or Triple",
+      "description": "American cheese, bacon, tomato, red onion, shredded lettuce and our famous big boy sauce on a brioche bun",
+      "categoryId": "cat-burgers",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_b3946c09810f467ab8b77ff454bd7487~mv2.jpg"
+    },
+    {
+      "id": "item-burger-brawny-lad",
+      "name": "Brawny Lad",
+      "description": "Topped with butter and a slice of onion on a toasted rye bun",
+      "categoryId": "cat-burgers",
+      "calories": 390,
+      "imageKey": "https://static.wixstatic.com/media/622d65_a1de2aea5f41461bbef04d67dbbac9ea~mv2.png"
+    },
+    {
+      "id": "item-burger-mushroom-and-swiss",
+      "name": "Mushroom & Swiss",
+      "description": "Mushroom, caramelized onions, swiss cheese and garlic spread on a grilled brioche bun",
+      "categoryId": "cat-burgers",
+      "calories": 1020,
+      "imageKey": "https://static.wixstatic.com/media/622d65_5a1dfedc2e734b1a903f8c47fd1dc380~mv2.jpg"
+    },
+    {
+      "id": "item-burger-patty-melt",
+      "name": "Patty Melt",
+      "description": "Caramelized onions, american and swiss cheese on grilled marbled rye, served with a side of thousand island",
+      "categoryId": "cat-burgers",
+      "calories": 865,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_65764fc317b44a25a2c6771ce9ea1e54~mv2.jpg"
+    },
+    {
+      "id": "item-burger-super-big-boy",
+      "name": "Super Big Boy®",
+      "description": "Double the meat! american cheese, shredded lettuce and our famous big boy sauce on a sesame seed bun",
+      "categoryId": "cat-burgers",
+      "calories": 750,
+      "imageKey": "https://static.wixstatic.com/media/622d65_525c54d4abb540a9a1c29faf5d2c5fd2~mv2.jpg"
+    },
+    {
+      "id": "item-burger-swiss-miss",
+      "name": "Swiss Miss",
+      "description": "Melted swiss cheese, shredded lettuce and tartar sauce on a toasted rye bun",
+      "categoryId": "cat-burgers",
+      "calories": 700,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_e37d93241ff848af9da94af9b3b67441~mv2.jpg"
+    },
+    {
+      "id": "item-dinners-chicken-parmesan",
+      "name": "Chicken Parmesan",
+      "description": "hand-breaded fried chicken breast topped with marinara and melted mozzarella cheese, served with spaghetti, a grilled garlic roll and a cup of soup or small house salad",
+      "categoryId": "cat-dinners",
+      "calories": 915,
+      "imageKey": "https://static.wixstatic.com/media/622d65_db702d087ea945bf97398411701fff16~mv2.png"
+    },
+    {
+      "id": "item-dinners-diner-style-hot-turkey",
+      "name": "Diner-Style Hot Turkey",
+      "description": "Slow roasted turkey breast on texas toast with mashed potatoes, turkey gravy, and mixed vegetables, served with a cup of soup or small house salad",
+      "categoryId": "cat-dinners",
+      "calories": 750,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_4b6f38f6ebdd4a19a0c4a7e3aa3954c2~mv2.jpg"
+    },
+    {
+      "id": "item-dinners-fried-shrimp",
+      "name": "Fried Shrimp",
+      "description": "Ten shrimp breaded in special seasoning with fries, cornbread, coleslaw and shrimp sauce",
+      "categoryId": "cat-dinners",
+      "calories": 740,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_01287a6b26b24e2d8391b34c629c0bb3~mv2.jpg"
+    },
+    {
+      "id": "item-dinners-hand-breaded-chicken-tenders",
+      "name": "Hand-Breaded Chicken Tenders",
+      "description": "Four hand-breaded chicken tenders served with fries, coleslaw, Texas toast and zesty sauce",
+      "categoryId": "cat-dinners",
+      "calories": 945,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_d29df0aacc7540ae8265de382a36473b~mv2.jpg"
+    },
+    {
+      "id": "item-dinners-pasta",
+      "name": "Pasta",
+      "description": "Choice of meat or marinara sauce over penne or spaghetti with a grilled garlic roll, served with a cup of soup or small house salad",
+      "categoryId": "cat-dinners",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/622d65_9cfc18b2ff914686baf3b180e752365c~mv2.png"
+    },
+    {
+      "id": "item-dinners-pot-roast-dinner",
+      "name": "Pot Roast Dinner",
+      "description": "Tender beef pot roast covered with rich beef gravy over mashed potatoes. Served with mixed vegetables, Texas toast and choice of coleslaw or a side salad.",
+      "categoryId": "cat-dinners",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_05e41c3cee814aa4a06d799cdfb7a4d0~mv2.jpg"
+    },
+    {
+      "id": "item-dinners-southern-fried-chicken",
+      "name": "Southern Fried Chicken",
+      "description": "Hand-breaded fried chicken topped with country sausage gravy served with mashed potatoes and gravy, mixed vegetables, coleslaw and texas toast",
+      "categoryId": "cat-dinners",
+      "calories": 815,
+      "imageKey": "https://static.wixstatic.com/media/29471e_5c95d22bc6204651b63fd3121fdf2118~mv2.jpg"
+    },
+    {
+      "id": "item-dinners-veal-parmesan",
+      "name": "Veal Parmesan",
+      "description": "Tender-breaded veal patty topped with marinara and melted mozzarella cheese, served with spaghetti, a grilled garlic roll and a cup of soup or small house salad",
+      "categoryId": "cat-dinners",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_45bb0cf5b6e340629c744a0a3b483c21~mv2.jpg"
+    },
+    {
+      "id": "item-desserts-apple-pie",
+      "name": "Apple Pie",
+      "description": "A classic favorite with spiced apples and a flaky, golden crust.",
+      "categoryId": "cat-desserts",
+      "calories": 700,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_5aaae9d45a7a4afdb4e9d34ad3c26fde~mv2.jpg"
+    },
+    {
+      "id": "item-desserts-banana-cream-pie",
+      "name": "Banana Cream Pie",
+      "description": "Smooth and creamy banana filling, topped with whipped cream on a buttery crust.",
+      "categoryId": "cat-desserts",
+      "calories": 770,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_a3882dccbc1c4b12b100cc2f13632276~mv2.jpg"
+    },
+    {
+      "id": "item-desserts-cherry-crumb-pie",
+      "name": "Cherry Crumb Pie",
+      "description": "A sweet and tart cherry filling with a delicious crumbly topping baked to perfection.",
+      "categoryId": "cat-desserts",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_ab497e22ae57492fa102ef7055d95f00~mv2.jpg"
+    },
+    {
+      "id": "item-desserts-chocolate-chip-cookie-sundae",
+      "name": "Chocolate Chip Cookie Sundae",
+      "description": "Big chocolate chip cookie, topped with premium hand-dipped vanilla ice cream, big boy hot fudge, whipped cream and a cherry",
+      "categoryId": "cat-desserts",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_2d46b727340f4e1eacc0e86826c4ae28~mv2.jpg"
+    },
+    {
+      "id": "item-desserts-chunky-monkey",
+      "name": "Chunky Monkey",
+      "description": "Chocolate ice cream, bananas, peanuts, caramel and chocolate flakes, topped with whipped cream and a cherry",
+      "categoryId": "cat-desserts",
+      "calories": 470,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_2ac73e3c0bac474aa9e6f5bcacd40b7f~mv2.jpg"
+    },
+    {
+      "id": "item-desserts-coconut-cream-pie",
+      "name": "Coconut Cream Pie",
+      "description": "A tropical delight with a rich coconut filling, topped with whipped cream and toasted coconut flakes.",
+      "categoryId": "cat-desserts",
+      "calories": 710,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_c0e9b9edaa044435877d2d8e5acc8348~mv2.jpg"
+    },
+    {
+      "id": "item-desserts-french-silk-pie",
+      "name": "French Silk Pie",
+      "description": "A decadent and silky chocolate pie, topped with whipped cream and chocolate shavings for an elegant finish.",
+      "categoryId": "cat-desserts",
+      "calories": 670,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_34156c6899694872bf04484210cec8f8~mv2.jpg"
+    },
+    {
+      "id": "item-desserts-hot-fudge-ice-cream-cake",
+      "name": "Hot Fudge Ice Cream Cake",
+      "description": "Our classic chocolate hot fudge cake, stacked with vanilla ice cream, then topped with big boy hot fudge, whipped cream and a cherry",
+      "categoryId": "cat-desserts",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_52d27bdb059f4b149b851cc05171a102~mv2.jpg"
+    },
+    {
+      "id": "item-desserts-mudslide",
+      "name": "Mudslide",
+      "description": "Vanilla ice cream, crushed OREO® cookies, big boy hot fudge and caramel, topped with whipped cream and a cherry",
+      "categoryId": "cat-desserts",
+      "calories": 515,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_ca0687c7abfa4a71a9046439f4dd7da5~mv2.jpg"
+    },
+    {
+      "id": "item-desserts-strawberry-cream-puff",
+      "name": "Strawberry Cream Puff",
+      "description": "Vanilla ice cream between a puff pastry, topped with fresh strawberries, vanilla cream cheese icing, strawberry topping, cookie crumbles, whipped cream and a cherry",
+      "categoryId": "cat-desserts",
+      "calories": 440,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_b7b9891c0d5d479da515583499522002~mv2.jpg"
+    },
+    {
+      "id": "item-desserts-strawberry-pie",
+      "name": "Strawberry Pie",
+      "description": "Fresh strawberries piled high in a flaky crust, topped with whipped cream for a refreshing treat.",
+      "categoryId": "cat-desserts",
+      "calories": 430,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_a746801407804f918a341293365f2d34~mv2.jpg"
+    },
+    {
+      "id": "item-soup-salad-big-boy-soups",
+      "name": "Big Boy® Soups",
+      "description": "Our signature soups include cream of broccoli with ham, zesty chicken tortilla and daily featured soup (selections vary by location)",
+      "categoryId": "cat-soups-salads",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/622d65_4200947183854e7d99e582ef58365a89~mv2.png"
+    },
+    {
+      "id": "item-soup-salad-chicken-caesar-salad",
+      "name": "Chicken Caesar Salad",
+      "description": "Romaine lettuce, homestyle croutons, and shredded parmesan cheese, tossed with caesar dressing and grilled marinated chicken",
+      "categoryId": "cat-soups-salads",
+      "calories": 870,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_ef8ee4a050e241719e85974ea1da83a6~mv2.jpg"
+    },
+    {
+      "id": "item-soup-salad-club-salad",
+      "name": "Club Salad",
+      "description": "Romaine lettuce, turkey, ham, chopped bacon, tomatoes, cheddar and Swiss cheese with ranch dressing",
+      "categoryId": "cat-soups-salads",
+      "calories": 780,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_aee6e602a2b142c393dd4326f61ab13a~mv2.jpg"
+    },
+    {
+      "id": "item-soup-salad-loaded-chili",
+      "name": "Loaded Chili",
+      "description": "With chopped onion and shredded cheddar",
+      "categoryId": "cat-soups-salads",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/622d65_c1504b6e7fd04c809304f382d23f1509~mv2.jpg"
+    },
+    {
+      "id": "item-sandwiches-bob-s-hot-chicken",
+      "name": "Bob's Hot Chicken",
+      "description": "Hand-breaded fried chicken breast tossed in our signature hot sauce with coleslaw, pickles and mayo on a grilled brioche bun",
+      "categoryId": "cat-sandwiches-and-wraps",
+      "calories": 835,
+      "imageKey": "https://static.wixstatic.com/media/29471e_c5484e74ccdf4ab8bbc06097116c8431~mv2.jpg"
+    },
+    {
+      "id": "item-sandwiches-buffalo-chicken-wrap",
+      "name": "Buffalo Chicken Wrap",
+      "description": "Crispy chicken tossed in buffalo sauce with cheddar cheese, red onion, tomato, shredded lettuce and ranch wrapped in a warm tortilla",
+      "categoryId": "cat-sandwiches-and-wraps",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/622d65_8c6f466d9dcc485e9142d0b3de9638dc~mv2.png"
+    },
+    {
+      "id": "item-sandwiches-buffalo-ranch-fried-chicken-sandwich",
+      "name": "Buffalo Ranch Fried Chicken Sandwich",
+      "description": "Hand-breaded fried chicken breast tossed in buffalo sauce with shredded lettuce, red onion, tomato and ranch dressing on a grilled brioche bun",
+      "categoryId": "cat-sandwiches-and-wraps",
+      "calories": 1270,
+      "imageKey": "https://static.wixstatic.com/media/622d65_56dd918519984586bf42fdcbc677a2e6~mv2.png"
+    },
+    {
+      "id": "item-sandwiches-corned-beef-reuben",
+      "name": "Corned Beef Reuben",
+      "description": "Thinly sliced corned beef with sauerkraut and melted swiss cheese on grilled marbled rye served with thousand island",
+      "categoryId": "cat-sandwiches-and-wraps",
+      "calories": 1005,
+      "imageKey": "https://static.wixstatic.com/media/622d65_294cddd1e4e242e88891bbee11cb11da~mv2.png"
+    },
+    {
+      "id": "item-sandwiches-fish-sandwich",
+      "name": "Fish Sandwich",
+      "description": "Premium cod fillets hand-battered to order with shredded lettuce, pickles, American cheese and tartar sauce on a brioche bun",
+      "categoryId": "cat-sandwiches-and-wraps",
+      "calories": 690,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_1030e246e97d4df98b47926c32117904~mv2.jpg"
+    },
+    {
+      "id": "item-sandwiches-honey-mustard-grilled-chicken-sandwich",
+      "name": "Honey Mustard Grilled Chicken Sandwich",
+      "description": "Grilled marinated chicken breast with swiss cheese, honey mustard, shredded lettuce, red onion and tomato on a grilled brioche bun",
+      "categoryId": "cat-sandwiches-and-wraps",
+      "calories": 810,
+      "imageKey": "https://static.wixstatic.com/media/622d65_02bed9b681e3413dbb5a807750a3ad0f~mv2.jpg"
+    },
+    {
+      "id": "item-sandwiches-philly-cheesesteak",
+      "name": "Philly Cheesesteak",
+      "description": "Seasoned shaved steak with mushroom and caramelized onion topped with four cheese sauce on a grilled roll",
+      "categoryId": "cat-sandwiches-and-wraps",
+      "calories": 850,
+      "imageKey": "https://static.wixstatic.com/media/622d65_abd7db126e974ee386eaa02e2e1c5662~mv2.png"
+    },
+    {
+      "id": "item-sandwiches-slim-jim",
+      "name": "Slim Jim®",
+      "description": "Lean ham, swiss cheese, tomato, iceberg lettuce and slim jim® sauce on a pressed and grilled slim jim roll",
+      "categoryId": "cat-sandwiches-and-wraps",
+      "calories": 510,
+      "imageKey": "https://static.wixstatic.com/media/622d65_0c77a0359e9348a48a09a5656b0d8498~mv2.png"
+    },
+    {
+      "id": "item-sandwiches-the-dolly-chicken-sandwich",
+      "name": "The Dolly Chicken Sandwich®",
+      "description": "Hand-breaded fried chicken breast, pickles and tartar sauce on a grilled brioche bun",
+      "categoryId": "cat-sandwiches-and-wraps",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_140306be0550408584fdfe8b3acedce1~mv2.jpg"
+    },
+    {
+      "id": "item-sandwiches-triple-decker-turkey-club",
+      "name": "Triple-Decker Turkey Club",
+      "description": "Slow-roasted turkey breast with ham, bacon, Swiss cheese, tomato, lettuce and mayo stacked on toasted sourdough bread",
+      "categoryId": "cat-sandwiches-and-wraps",
+      "calories": 805,
+      "imageKey": "https://static.wixstatic.com/media/622d65_8c3f3d49133f4be4a8eb721f7f53bfd2~mv2.png"
+    },
+    {
+      "id": "item-sandwiches-turkey-reuben",
+      "name": "Turkey Reuben",
+      "description": "Slow-roasted turkey breast, swiss cheese and coleslaw on grilled rye, served with thousand island dressing",
+      "categoryId": "cat-sandwiches-and-wraps",
+      "calories": 510,
+      "imageKey": "https://static.wixstatic.com/media/29471e_f0156acd35f241d793ae8bdff0e2abf9~mv2.jpg"
+    },
+    {
+      "id": "item-kids-kids-breakfast-anytime",
+      "name": "Kids Breakfast Anytime",
+      "description": "Choice of bacon or sausage and: - Hotcakes (375-440 cal) - Rainbow Hotcakes (750 cal) - Eggs & toast (205-580 cal) - Mini belgian waffle (​​​​495-710 cal) - French toast ​(​​​​​​​455-670 cal)",
+      "categoryId": "cat-kids-meals",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_47a375f5c5444c219412a98977aa7768~mv2.jpg"
+    },
+    {
+      "id": "item-kids-kids-lunch-or-dinner",
+      "name": "Kids Lunch or Dinner",
+      "description": "Includes choice of soft drink, milk, or juice; and one side item: - Cheeseburger (555-1150 cal) - Grilled cheese ​​​​​​(​​​​​​​​​550-1140 cal) - Chicken Nuggets (485-725 cal) - Kraft® mac & cheese ​​​​(​​​​495-1085 cal) - Hand-breaded chicken tenders ​​​​(​​​​​​​​​​915-1505 cal) - Spaghetti ​​​​​​ (​​​​​​​​​​​​​​500-1095 cal)",
+      "categoryId": "cat-kids-meals",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_2c5b89b636a64eabbc824c286d6dd28b~mv2.jpg"
+    },
+    {
+      "id": "item-kids-kids-meal-sides",
+      "name": "Kids Meal Sides",
+      "description": "- Apple sauce (110 cal) - French fries ​​​(145 cal)​​​​ - Onion rings ​​​(220 cal)​​​​​​ - Fruit cup ​​​(75 cal)",
+      "categoryId": "cat-kids-meals",
+      "calories": null,
+      "imageKey": "https://static.wixstatic.com/media/9047ad_88b94b0ed4054ce0bfc36583f0112234~mv2.jpg"
+    }
+  ]
+}

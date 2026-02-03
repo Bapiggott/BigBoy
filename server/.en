@@ -1,0 +1,11 @@
+DATABASE_URL="mysql://bigboy:bigboy_password@localhost:3306/bigboy_db"
+JWT_SECRET="dev_secret_change_me"
+JWT_EXPIRES_IN="7d"
+PORT=3001
+CORS_ORIGIN="http://localhost:19006"
+POS_API_URL="https://example-pos.local"
+POS_API_KEY="dev"
+
+
+
+

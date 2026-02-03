@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: bigboy-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-bigboy_root_2024}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-bigboy_db}
+      MYSQL_USER: ${MYSQL_USER:-bigboy}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-bigboy_password}
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./server/prisma/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-bigboy_root_2024}"]
+      timeout: 5s
+      retries: 10
+      interval: 5s
+    networks:
+      - bigboy-network
+
+  # API Server
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: bigboy-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3001
+      DATABASE_URL: mysql://${MYSQL_USER:-bigboy}:${MYSQL_PASSWORD:-bigboy_password}@mysql:3306/${MYSQL_DATABASE:-bigboy_db}
+      JWT_SECRET: ${JWT_SECRET:-bigboy-jwt-secret-change-in-production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    ports:
+      - "3001:3001"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./server/src:/app/src:ro
+      - ./server/prisma:/app/prisma:ro
+    networks:
+      - bigboy-network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  bigboy-network:
+    driver: bridge

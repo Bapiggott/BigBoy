@@ -1,0 +1,167 @@
+import { Order } from '../types';
+
+/**
+ * Mock Orders (for offline mode / demo)
+ */
+export const mockOrders: Order[] = [
+  {
+    id: 'order-1',
+    orderNumber: 'BB-2024-0001',
+    userId: 'user-001',
+    locationId: 'location-1',
+    orderType: 'pickup',
+    status: 'completed',
+    subtotal: 26.97,
+    tax: 1.62,
+    tip: 4.00,
+    discount: 0,
+    total: 32.59,
+    customer: {
+      name: 'John Doe',
+      phone: '(248) 555-1234',
+      email: 'john.doe@example.com',
+    },
+    items: [
+      {
+        id: 'oi-1',
+        menuItemId: 'item-10',
+        name: 'Big Boy Burger',
+        quantity: 2,
+        unitPrice: 12.99,
+        totalPrice: 25.98,
+        modifiers: [
+          {
+            id: 'oim-1',
+            groupId: 'mod-cooktemp',
+            groupName: 'Cook Temperature',
+            modifierId: 'cook-m',
+            modifierName: 'Medium',
+            price: 0,
+          },
+        ],
+      },
+      {
+        id: 'oi-2',
+        menuItemId: 'item-70',
+        name: 'Soft Drink',
+        quantity: 1,
+        unitPrice: 2.99,
+        totalPrice: 2.99,
+        modifiers: [],
+      },
+    ],
+    pointsEarned: 326,
+    pointsRedeemed: 0,
+    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+    completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 20 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'order-2',
+    orderNumber: 'BB-2024-0002',
+    userId: 'user-001',
+    locationId: 'location-2',
+    orderType: 'dine-in',
+    status: 'preparing',
+    subtotal: 35.96,
+    tax: 2.16,
+    tip: 0,
+    discount: 0,
+    total: 38.12,
+    customer: {
+      name: 'John Doe',
+      phone: '(248) 555-1234',
+    },
+    items: [
+      {
+        id: 'oi-3',
+        menuItemId: 'item-1',
+        name: 'Big Boy Breakfast',
+        quantity: 2,
+        unitPrice: 11.99,
+        totalPrice: 23.98,
+        modifiers: [
+          {
+            id: 'oim-2',
+            groupId: 'mod-eggstyle',
+            groupName: 'Egg Style',
+            modifierId: 'egg-scrambled',
+            modifierName: 'Scrambled',
+            price: 0,
+          },
+        ],
+      },
+      {
+        id: 'oi-4',
+        menuItemId: 'item-60',
+        name: 'Hot Fudge Cake',
+        quantity: 1,
+        unitPrice: 7.99,
+        totalPrice: 7.99,
+        modifiers: [],
+      },
+      {
+        id: 'oi-5',
+        menuItemId: 'item-71',
+        name: 'Fresh Brewed Coffee',
+        quantity: 2,
+        unitPrice: 2.49,
+        totalPrice: 4.98,
+        modifiers: [],
+      },
+    ],
+    pointsEarned: 381,
+    pointsRedeemed: 0,
+    estimatedReady: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // 15 min from now
+    createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(), // 10 min ago
+  },
+  {
+    id: 'order-3',
+    orderNumber: 'BB-2024-0003',
+    userId: 'user-001',
+    locationId: 'location-1',
+    orderType: 'pickup',
+    status: 'completed',
+    subtotal: 22.97,
+    tax: 1.38,
+    tip: 3.00,
+    discount: 0,
+    total: 27.35,
+    customer: {
+      name: 'John Doe',
+      phone: '(248) 555-1234',
+    },
+    items: [
+      {
+        id: 'oi-6',
+        menuItemId: 'item-22',
+        name: 'Philly Cheesesteak',
+        quantity: 1,
+        unitPrice: 13.99,
+        totalPrice: 13.99,
+        modifiers: [],
+      },
+      {
+        id: 'oi-7',
+        menuItemId: 'item-50',
+        name: 'French Fries',
+        quantity: 1,
+        unitPrice: 3.99,
+        totalPrice: 3.99,
+        modifiers: [],
+      },
+      {
+        id: 'oi-8',
+        menuItemId: 'item-70',
+        name: 'Soft Drink',
+        quantity: 1,
+        unitPrice: 2.99,
+        totalPrice: 2.99,
+        modifiers: [],
+      },
+    ],
+    pointsEarned: 274,
+    pointsRedeemed: 0,
+    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 1 week ago
+    completedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 + 25 * 60 * 1000).toISOString(),
+  },
+];

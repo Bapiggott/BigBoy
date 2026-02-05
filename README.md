@@ -24,8 +24,8 @@ A full-featured mobile app for Big Boy Restaurant with ordering, rewards, and lo
 ### Backend (server/)
 - Node.js 18+ with Express 4
 - Prisma ORM 5.22
-- MySQL 8.0
-- JWT Authentication
+- PostgreSQL 15
+- JWT Authentication (access + refresh)
 - Zod validation
 
 ---
@@ -42,14 +42,14 @@ cd bigboy-app
 ### 2. Start Database
 
 ```bash
-# Start MySQL container
-docker compose up -d mysql
+# Start Postgres container
+docker compose up -d postgres
 
-# Wait for MySQL to be healthy (check status)
+# Wait for Postgres to be healthy (check status)
 docker compose ps
-# Should show: bigboy-mysql ... healthy
+# Should show: bigboy-postgres ... healthy
 
-# If first time, wait ~30 seconds for initialization
+# If first time, wait ~15 seconds for initialization
 ```
 
 ### 3. Setup Server
@@ -59,10 +59,10 @@ cd server
 npm ci
 
 # Generate Prisma client
-npm run db:generate
+npm run prisma:generate
 
-# Push schema to database
-npm run db:push
+# Create and run migrations
+npm run prisma:migrate
 
 # Seed with test data
 npm run db:seed
@@ -71,27 +71,27 @@ npm run db:seed
 npm run dev
 ```
 
-Server runs at: http://localhost:3001
+Server runs at: http://localhost:4000
 
 ### 4. Verify Server (in new terminal)
 
 ```bash
 # Health check
-curl http://localhost:3001/health
+curl http://localhost:4000/health
 # Expected: {"status":"ok","timestamp":"..."}
 
 # Test login
-curl -X POST http://localhost:3001/api/auth/login \
+curl -X POST http://localhost:4000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"john@example.com","password":"password123"}'
-# Expected: {"message":"Login successful","user":{...},"token":"..."}
+# Expected: {"message":"Login successful","user":{...},"accessToken":"...","refreshToken":"..."}
 
 # Test menu
-curl http://localhost:3001/api/menu/categories
+curl http://localhost:4000/api/menu/categories
 # Expected: {"categories":[...]}
 
 # Test locations
-curl http://localhost:3001/api/locations
+curl http://localhost:4000/api/locations
 # Expected: {"locations":[...],"count":10}
 ```
 
@@ -118,26 +118,26 @@ npm start
 ### Server (.env)
 
 ```bash
-# Database
-DATABASE_URL="mysql://bigboy:bigboy123@localhost:3306/bigboy_db"
+# Required
+DATABASE_URL=postgresql://bigboy:bigboy_password@localhost:5432/bigboy_db
+JWT_SECRET=change-me
+JWT_REFRESH_SECRET=change-me-too
 
-# Authentication
-JWT_SECRET="your-super-secret-key-change-in-production"
-JWT_EXPIRES_IN="7d"
-
-# Server
-PORT=3001
+# Optional
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=30d
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+CORS_ORIGIN=*
+PORT=4000
 NODE_ENV=development
-
-# CORS (for mobile app)
-CORS_ORIGIN="*"
-
-# POS Integration (stub for now)
-POS_API_URL="http://localhost:9700"
-POS_API_KEY=""
 ```
 
-### App (.env.local - optional)
+### App (Expo env - optional)
+
+```bash
+# For physical devices, use your LAN IP instead of localhost
+EXPO_PUBLIC_API_BASE_URL=http://<your-lan-ip>:4000/api
+```
 
 ```bash
 # API URL (defaults to localhost:3001)

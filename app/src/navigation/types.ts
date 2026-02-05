@@ -4,10 +4,11 @@ import { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/n
 
 // Root tab navigator param list
 export type RootTabParamList = {
+  NewsTab: NavigatorScreenParams<NewsStackParamList>;
   HomeTab: NavigatorScreenParams<HomeStackParamList>;
   MenuTab: NavigatorScreenParams<MenuStackParamList>;
   RewardsTab: NavigatorScreenParams<RewardsStackParamList>;
-  LocationsTab: NavigatorScreenParams<LocationsStackParamList>;
+  MoreTab: NavigatorScreenParams<MoreStackParamList>;
   AccountTab: NavigatorScreenParams<AccountStackParamList>;
 };
 
@@ -18,10 +19,16 @@ export type AuthStackParamList = {
   ForgotPassword: undefined;
 };
 
+// News stack
+export type NewsStackParamList = {
+  News: undefined;
+};
+
 // Home stack
 export type HomeStackParamList = {
   Home: undefined;
   OrderDetail: { orderId: string };
+  NewsDetail: { newsId: string };
 };
 
 // Menu stack
@@ -42,6 +49,13 @@ export type RewardsStackParamList = {
 
 // Locations stack
 export type LocationsStackParamList = {
+  Locations: undefined;
+  LocationDetail: { locationId: string };
+};
+
+// More stack
+export type MoreStackParamList = {
+  More: undefined;
   Locations: undefined;
   LocationDetail: { locationId: string };
 };
@@ -102,6 +116,11 @@ export type HomeTabProps = CompositeScreenProps<
   NativeStackScreenProps<HomeStackParamList>
 >;
 
+export type NewsTabProps = CompositeScreenProps<
+  BottomTabScreenProps<RootTabParamList, 'NewsTab'>,
+  NativeStackScreenProps<NewsStackParamList>
+>;
+
 export type MenuTabProps = CompositeScreenProps<
   BottomTabScreenProps<RootTabParamList, 'MenuTab'>,
   NativeStackScreenProps<MenuStackParamList>
@@ -112,9 +131,9 @@ export type RewardsTabProps = CompositeScreenProps<
   NativeStackScreenProps<RewardsStackParamList>
 >;
 
-export type LocationsTabProps = CompositeScreenProps<
-  BottomTabScreenProps<RootTabParamList, 'LocationsTab'>,
-  NativeStackScreenProps<LocationsStackParamList>
+export type MoreTabProps = CompositeScreenProps<
+  BottomTabScreenProps<RootTabParamList, 'MoreTab'>,
+  NativeStackScreenProps<MoreStackParamList>
 >;
 
 export type AccountTabProps = CompositeScreenProps<

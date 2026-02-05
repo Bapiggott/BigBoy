@@ -79,7 +79,7 @@ const CartScreen: React.FC<Props> = ({ navigation }) => {
         {/* Location */}
         <TouchableOpacity
           style={styles.locationCard}
-          onPress={() => navigation.getParent()?.navigate('LocationsTab')}
+          onPress={() => navigation.getParent()?.navigate('MoreTab', { screen: 'Locations' })}
         >
           <View style={styles.locationLeft}>
             <Ionicons name="location" size={20} color={colors.primary.main} />

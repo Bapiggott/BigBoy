@@ -5,6 +5,7 @@ import { colors } from '../theme';
 
 import HomeScreen from '../screens/home/HomeScreen';
 import OrderDetailScreen from '../screens/orders/OrderDetailScreen';
+import NewsDetailScreen from '../screens/home/NewsDetailScreen';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
@@ -34,6 +35,11 @@ const HomeStack: React.FC = () => {
         name="OrderDetail"
         component={OrderDetailScreen}
         options={{ title: 'Order Details' }}
+      />
+      <Stack.Screen
+        name="NewsDetail"
+        component={NewsDetailScreen}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

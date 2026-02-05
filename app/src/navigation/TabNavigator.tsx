@@ -6,27 +6,30 @@ import { RootTabParamList } from './types';
 import { colors, spacing } from '../theme';
 import { useCart } from '../store/CartContext';
 
+import NewsStack from './NewsStack';
 import HomeStack from './HomeStack';
 import MenuStack from './MenuStack';
 import RewardsStack from './RewardsStack';
-import LocationsStack from './LocationsStack';
+import MoreStack from './MoreStack';
 import AccountStack from './AccountStack';
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
 type TabIconName = 
+  | 'newspaper' | 'newspaper-outline'
   | 'home' | 'home-outline' 
   | 'restaurant' | 'restaurant-outline' 
   | 'gift' | 'gift-outline' 
-  | 'location' | 'location-outline' 
+  | 'ellipsis-horizontal' | 'ellipsis-horizontal-outline'
   | 'person' | 'person-outline';
 
 const getTabIcon = (routeName: string, focused: boolean): TabIconName => {
   const icons: Record<string, { focused: TabIconName; unfocused: TabIconName }> = {
+    NewsTab: { focused: 'newspaper', unfocused: 'newspaper-outline' },
     HomeTab: { focused: 'home', unfocused: 'home-outline' },
     MenuTab: { focused: 'restaurant', unfocused: 'restaurant-outline' },
     RewardsTab: { focused: 'gift', unfocused: 'gift-outline' },
-    LocationsTab: { focused: 'location', unfocused: 'location-outline' },
+    MoreTab: { focused: 'ellipsis-horizontal', unfocused: 'ellipsis-horizontal-outline' },
     AccountTab: { focused: 'person', unfocused: 'person-outline' },
   };
   return icons[routeName]?.[focused ? 'focused' : 'unfocused'] ?? 'home-outline';
@@ -68,6 +71,11 @@ const TabNavigator: React.FC = () => {
       })}
     >
       <Tab.Screen
+        name="NewsTab"
+        component={NewsStack}
+        options={{ tabBarLabel: 'News' }}
+      />
+      <Tab.Screen
         name="HomeTab"
         component={HomeStack}
         options={{ tabBarLabel: 'Home' }}
@@ -83,9 +91,9 @@ const TabNavigator: React.FC = () => {
         options={{ tabBarLabel: 'Rewards' }}
       />
       <Tab.Screen
-        name="LocationsTab"
-        component={LocationsStack}
-        options={{ tabBarLabel: 'Locations' }}
+        name="MoreTab"
+        component={MoreStack}
+        options={{ tabBarLabel: 'More' }}
       />
       <Tab.Screen
         name="AccountTab"

@@ -8,6 +8,12 @@ interface UserContextValue {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
+  googleLogin: (idToken: string) => Promise<boolean>;
+  googleLoginWithAuthCode: (payload: {
+    code: string;
+    codeVerifier: string;
+    redirectUri: string;
+  }) => Promise<boolean>;
   register: (data: {
     email: string;
     password: string;
@@ -66,6 +72,48 @@ export function UserProvider({ children }: UserProviderProps) {
       return false;
     } catch (error) {
       console.error('Login failed:', error);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const googleLogin = useCallback(async (idToken: string): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      console.log('[UserContext] Google login with ID token');
+      const result = await authApi.googleLogin(idToken);
+      if (result) {
+        await appStorage.setAuthToken(result.token);
+        setUser(result.user);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Google login failed:', error);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const googleLoginWithAuthCode = useCallback(async (payload: {
+    code: string;
+    codeVerifier: string;
+    redirectUri: string;
+  }): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      console.log('[UserContext] Google login with auth code');
+      const result = await authApi.googleLoginWithAuthCode(payload);
+      if (result) {
+        await appStorage.setAuthToken(result.token);
+        setUser(result.user);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Google login failed:', error);
       return false;
     } finally {
       setIsLoading(false);
@@ -132,6 +180,8 @@ export function UserProvider({ children }: UserProviderProps) {
       isLoading,
       isAuthenticated: !!user,
       login,
+      googleLogin,
+      googleLoginWithAuthCode,
       register,
       logout,
       refreshUser,

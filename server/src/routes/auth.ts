@@ -26,6 +26,15 @@ const updatePasswordSchema = z.object({
   newPassword: z.string().min(8, 'New password must be at least 8 characters'),
 });
 
+const googleLoginSchema = z.object({
+  idToken: z.string().min(1).optional(),
+  code: z.string().min(1).optional(),
+  codeVerifier: z.string().min(1).optional(),
+  redirectUri: z.string().min(1).optional(),
+}).refine((data) => data.idToken || data.code, {
+  message: 'Either idToken or code is required',
+});
+
 /**
  * POST /api/auth/register
  * Register a new user
@@ -192,6 +201,122 @@ router.put('/password', authenticate, async (req: AuthenticatedRequest, res: Res
 router.post('/logout', authenticate, async (_req: AuthenticatedRequest, res: Response) => {
   // In a more complex system, we might invalidate tokens server-side
   res.json({ message: 'Logged out successfully' });
+});
+
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+
+/**
+ * POST /api/auth/google
+ * Login/register with Google ID token or auth code + PKCE
+ */
+router.post('/google', async (req, res: Response, next: NextFunction) => {
+  try {
+    const { idToken, code, codeVerifier, redirectUri } = googleLoginSchema.parse(req.body);
+
+    let tokenToVerify = idToken;
+
+    if (!tokenToVerify && code) {
+      if (!GOOGLE_CLIENT_ID) {
+        throw createError('Google client ID not configured', 500, 'GOOGLE_CLIENT_ID_MISSING');
+      }
+
+      const body = new URLSearchParams({
+        code,
+        client_id: GOOGLE_CLIENT_ID,
+        code_verifier: codeVerifier ?? '',
+        redirect_uri: redirectUri ?? '',
+        grant_type: 'authorization_code',
+      });
+
+      if (GOOGLE_CLIENT_SECRET) {
+        body.append('client_secret', GOOGLE_CLIENT_SECRET);
+      }
+
+      const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString(),
+      });
+
+      const tokenJson: any = await tokenRes.json();
+      if (!tokenRes.ok) {
+        console.error('[GoogleAuth] token exchange failed', tokenJson);
+        throw createError('Google token exchange failed', 400, 'GOOGLE_TOKEN_EXCHANGE_FAILED');
+      }
+
+      tokenToVerify = tokenJson.id_token;
+    }
+
+    if (!tokenToVerify) {
+      throw createError('ID token missing', 400, 'MISSING_ID_TOKEN');
+    }
+
+    // Decode the Google ID token to get user info
+    // NOTE: In production, use google-auth-library to verify the token!
+    // const { OAuth2Client } = require('google-auth-library');
+    // const client = new OAuth2Client(GOOGLE_CLIENT_ID);
+    // const ticket = await client.verifyIdToken({ idToken, audience: GOOGLE_CLIENT_ID });
+    // const payload = ticket.getPayload();
+
+    // For development, decode the JWT payload directly
+    // WARNING: This does NOT verify the token signature!
+    let payload: { email?: string; given_name?: string; family_name?: string; sub?: string };
+    try {
+      const parts = tokenToVerify.split('.');
+      if (parts.length !== 3) {
+        throw createError('Invalid ID token format', 400, 'INVALID_TOKEN');
+      }
+      payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+    } catch (e) {
+      throw createError('Could not decode ID token', 400, 'INVALID_TOKEN');
+    }
+
+    if (!payload.email) {
+      throw createError('Email not found in token', 400, 'MISSING_EMAIL');
+    }
+
+    // Find or create user
+    let user = await prisma.user.findUnique({
+      where: { email: payload.email },
+    });
+
+    if (!user) {
+      // Create new user with Google info
+      // Use a random password since they're using Google auth
+      const randomPassword = Math.random().toString(36).slice(-16);
+      const passwordHash = await bcrypt.hash(randomPassword, 12);
+
+      user = await prisma.user.create({
+        data: {
+          email: payload.email,
+          passwordHash,
+          firstName: payload.given_name || 'Google',
+          lastName: payload.family_name || 'User',
+          loyaltyPoints: 100, // Welcome bonus
+          lifetimePoints: 100,
+          preferences: {
+            create: {},
+          },
+        },
+      });
+
+      console.log(`[GoogleAuth] Created new user: ${payload.email}`);
+    } else {
+      console.log(`[GoogleAuth] Existing user logged in: ${payload.email}`);
+    }
+
+    // Generate JWT token
+    const token = generateToken(user.id, user.email);
+
+    res.json({
+      message: 'Google login successful',
+      user: formatUser(user),
+      token,
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 // Helper: Format user for response

@@ -172,3 +172,110 @@ export const requestPasswordReset = async (email: string): Promise<boolean> => {
   });
   return response.success;
 };
+
+/**
+ * Google Sign-In
+ * Sends the Google ID token to the backend for verification
+ */
+export const googleLogin = async (idToken: string): Promise<{ token: string; user: User } | null> => {
+  console.log('[AuthAPI] Google login with ID token');
+
+  if (USE_MOCK) {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // In a real implementation, the backend would:
+    // 1. Verify the ID token with Google
+    // 2. Extract user info (email, name, etc.)
+    // 3. Create or find the user in the database
+    // 4. Return a JWT token
+
+    // For mock, we'll decode the token payload (middle part of JWT)
+    // to get user info, or use fake data
+    let email = 'google.user@gmail.com';
+    let firstName = 'Google';
+    let lastName = 'User';
+
+    try {
+      // Try to decode the Google ID token to get real user info
+      const parts = idToken.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1]));
+        email = payload.email || email;
+        firstName = payload.given_name || firstName;
+        lastName = payload.family_name || lastName;
+        console.log('[AuthAPI] Decoded Google token:', { email, firstName, lastName });
+      }
+    } catch (e) {
+      console.log('[AuthAPI] Could not decode token, using mock data');
+    }
+
+    return {
+      token: 'mock-jwt-token-google-user',
+      user: {
+        id: 'user-google',
+        email,
+        firstName,
+        lastName,
+        loyaltyStatus: {
+          currentPoints: 0,
+          lifetimePoints: 0,
+          tier: 'bronze',
+          pointsToNextTier: 1000,
+          memberSince: new Date().toISOString().split('T')[0],
+        },
+        createdAt: new Date().toISOString(),
+      },
+    };
+  }
+
+  const response = await apiClient.post<{ token: string; user: User }>('/auth/google', { idToken }, {
+    requiresAuth: false,
+  });
+
+  if (response.success && response.data) {
+    return response.data;
+  }
+
+  return null;
+};
+
+/**
+ * Google Sign-In with auth code + PKCE
+ */
+export const googleLoginWithAuthCode = async (payload: {
+  code: string;
+  codeVerifier: string;
+  redirectUri: string;
+}): Promise<{ token: string; user: User } | null> => {
+  if (USE_MOCK) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return {
+      token: 'mock-jwt-token-google-user',
+      user: {
+        id: 'user-google',
+        email: 'google.user@gmail.com',
+        firstName: 'Google',
+        lastName: 'User',
+        loyaltyStatus: {
+          currentPoints: 0,
+          lifetimePoints: 0,
+          tier: 'bronze',
+          pointsToNextTier: 1000,
+          memberSince: new Date().toISOString().split('T')[0],
+        },
+        createdAt: new Date().toISOString(),
+      },
+    };
+  }
+
+  const response = await apiClient.post<{ token: string; user: User }>('/auth/google', payload, {
+    requiresAuth: false,
+  });
+
+  if (response.success && response.data) {
+    return response.data;
+  }
+
+  return null;
+};

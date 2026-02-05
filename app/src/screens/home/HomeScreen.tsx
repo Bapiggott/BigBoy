@@ -101,7 +101,7 @@ const HomeScreen: React.FC = () => {
         {/* Location Selector */}
         <TouchableOpacity
           style={styles.locationCard}
-          onPress={() => navigation.navigate('LocationsTab')}
+          onPress={() => navigation.navigate('MoreTab', { screen: 'Locations' })}
           accessibilityRole="button"
           accessibilityLabel="Select pickup location"
         >
@@ -173,7 +173,7 @@ const HomeScreen: React.FC = () => {
 
           <TouchableOpacity
             style={styles.quickAction}
-            onPress={() => navigation.navigate('LocationsTab')}
+            onPress={() => navigation.navigate('MoreTab', { screen: 'Locations' })}
           >
             <View style={[styles.quickActionIcon, { backgroundColor: '#E3F2FD' }]}>
               <Ionicons name="location" size={24} color={colors.info} />

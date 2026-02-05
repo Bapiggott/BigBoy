@@ -3,6 +3,11 @@ import React from "react";
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
+
+// Complete any pending auth sessions when the app loads
+// This is required for the OAuth redirect to work properly
+WebBrowser.maybeCompleteAuthSession();
 
 // Providers - order matters: outer providers are available to inner ones
 import {

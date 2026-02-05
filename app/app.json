@@ -2,6 +2,7 @@
   "expo": {
     "name": "Big Boy",
     "slug": "bigboy-app",
+    "scheme": "bigboy",
     "newArchEnabled": false,
     "version": "1.0.0",
     "orientation": "portrait",
@@ -12,7 +13,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#C8102E"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bigboy.app"
@@ -40,7 +43,10 @@
       "expo-font"
     ],
     "extra": {
-      "apiUrl": "http://localhost:3001/api"
+      "apiUrl": "http://localhost:3001/api",
+      "eas": {
+        "projectId": "1dc4ae91-dd4b-45e9-a401-accc7737a558"
+      }
     }
   }
 }

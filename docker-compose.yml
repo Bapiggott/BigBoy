@@ -1,30 +1,26 @@
 version: '3.8'
 
 services:
-  # MySQL Database
-  mysql:
-    image: mysql:8.0
-    container_name: bigboy-mysql
+  postgres:
+    image: postgres:15
+    container_name: bigboy-postgres
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-bigboy_root_2024}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-bigboy_db}
-      MYSQL_USER: ${MYSQL_USER:-bigboy}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-bigboy_password}
+      POSTGRES_USER: bigboy
+      POSTGRES_PASSWORD: bigboy_password
+      POSTGRES_DB: bigboy_db
     ports:
-      - "${MYSQL_PORT:-3306}:3306"
+      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
-      - ./server/prisma/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-bigboy_root_2024}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bigboy} -d ${POSTGRES_DB:-bigboy_db}"]
       timeout: 5s
       retries: 10
       interval: 5s
     networks:
       - bigboy-network
 
-  # API Server
   server:
     build:
       context: ./server
@@ -33,15 +29,18 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: ${NODE_ENV:-development}
-      PORT: 3001
-      DATABASE_URL: mysql://${MYSQL_USER:-bigboy}:${MYSQL_PASSWORD:-bigboy_password}@mysql:3306/${MYSQL_DATABASE:-bigboy_db}
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-bigboy}:${POSTGRES_PASSWORD:-bigboy_password}@postgres:5432/${POSTGRES_DB:-bigboy_db}
       JWT_SECRET: ${JWT_SECRET:-bigboy-jwt-secret-change-in-production}
-      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-bigboy-refresh-secret-change-in-production}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-30d}
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     ports:
-      - "3001:3001"
+      - "4000:4000"
     depends_on:
-      mysql:
+      postgres:
         condition: service_healthy
     volumes:
       - ./server/src:/app/src:ro
@@ -50,7 +49,7 @@ services:
       - bigboy-network
 
 volumes:
-  mysql_data:
+  postgres_data:
     driver: local
 
 networks:

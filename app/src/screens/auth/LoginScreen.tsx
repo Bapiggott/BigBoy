@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,9 +12,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius } from '../../theme';
 import { useUser, useToast } from '../../store';
 import { Button } from '../../components/Button';
+import { useGoogleAuth } from '../../hooks';
 
 type AuthStackParamList = {
   Login: undefined;
@@ -27,10 +29,63 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
-  const { login } = useUser();
+  const { login, googleLoginWithAuthCode } = useUser();
   const { showToast } = useToast();
+  const { promptAsync, isReady: isGoogleReady, redirectUri } = useGoogleAuth();
+
+  // Log Google auth redirect URI on mount for debugging
+  useEffect(() => {
+    console.log('[LoginScreen] Google Auth redirect URI:', redirectUri);
+    console.log('[LoginScreen] Google Auth ready:', isGoogleReady);
+  }, [redirectUri, isGoogleReady]);
+
+  const handleGoogleSignIn = async () => {
+    if (!isGoogleReady) {
+      console.log('[LoginScreen] Google Auth not ready');
+      showToast('Google Sign-In not ready. Please wait...', 'error');
+      return;
+    }
+
+    setIsGoogleLoading(true);
+    console.log('[LoginScreen] Starting Google Sign-In...');
+
+    try {
+      const result = await promptAsync();
+
+      console.log('[LoginScreen] Google Auth result:', {
+        type: result.type,
+        hasCode: !!result.code,
+        hasCodeVerifier: !!result.codeVerifier,
+      });
+
+      if (result.type === 'success' && result.code && result.codeVerifier && result.redirectUri) {
+        const success = await googleLoginWithAuthCode({
+          code: result.code,
+          codeVerifier: result.codeVerifier,
+          redirectUri: result.redirectUri,
+        });
+        if (success) {
+          showToast('Welcome!', 'success');
+        } else {
+          showToast('Failed to sign in with Google', 'error');
+        }
+      } else if (result.type === 'cancel') {
+        console.log('[LoginScreen] User cancelled Google Sign-In');
+        // User cancelled, no need to show error
+      } else if (result.type === 'error') {
+        console.log('[LoginScreen] Google Sign-In error:', result.error);
+        showToast(result.error || 'Google Sign-In failed', 'error');
+      }
+    } catch (error) {
+      console.error('[LoginScreen] Google Sign-In exception:', error);
+      showToast('Something went wrong with Google Sign-In', 'error');
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
 
   const validate = (): boolean => {
     const newErrors: { email?: string; password?: string } = {};
@@ -139,9 +194,37 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
             <Button
               title={isLoading ? 'Signing in...' : 'Sign In'}
               onPress={handleLogin}
-              disabled={isLoading}
+              disabled={isLoading || isGoogleLoading}
               style={styles.submitButton}
             />
+
+            {/* Divider */}
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Google Sign-In Button */}
+            <TouchableOpacity
+              style={[
+                styles.googleButton,
+                (!isGoogleReady || isGoogleLoading || isLoading) && styles.googleButtonDisabled,
+              ]}
+              onPress={handleGoogleSignIn}
+              disabled={!isGoogleReady || isGoogleLoading || isLoading}
+              accessibilityRole="button"
+              accessibilityLabel="Continue with Google"
+            >
+              {isGoogleLoading ? (
+                <ActivityIndicator color={colors.text.primary} size="small" />
+              ) : (
+                <>
+                  <Ionicons name="logo-google" size={20} color={colors.text.primary} />
+                  <Text style={styles.googleButtonText}>Continue with Google</Text>
+                </>
+              )}
+            </TouchableOpacity>
           </View>
 
           {/* Footer */}
@@ -246,6 +329,40 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     marginTop: spacing.sm,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing.xl,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border.main,
+  },
+  dividerText: {
+    ...typography.labelMedium,
+    color: colors.text.tertiary,
+    marginHorizontal: spacing.md,
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border.main,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+  },
+  googleButtonDisabled: {
+    opacity: 0.6,
+  },
+  googleButtonText: {
+    ...typography.labelLarge,
+    color: colors.text.primary,
   },
   footer: {
     flexDirection: 'row',

@@ -67,7 +67,10 @@ const LOCAL_MENU_IMAGES: Record<string, ImageSourcePropType> = {
   'soft-drink.jpg': require('../../assets/menu_images_fixed/soft-drink.jpg'),
 };
 
+const BRAND_PLACEHOLDER = require('../../assets/brand/bigboy-logo-modern.png');
+
 export const MENU_IMAGE_PLACEHOLDER =
+  BRAND_PLACEHOLDER ??
   LOCAL_MENU_IMAGES['placeholder.png'] ??
   LOCAL_MENU_IMAGES['placeholder.jpg'] ??
   LOCAL_MENU_IMAGES['big-boy.png'] ??
@@ -92,3 +95,6 @@ export const resolveMenuImage = (item?: Pick<MenuItem, 'imageUrl' | 'image'>): R
   }
   return { type: 'local', source: MENU_IMAGE_PLACEHOLDER };
 };
+
+export const resolveItemImage = (item?: Pick<MenuItem, 'imageUrl' | 'image'>): ImageSourcePropType =>
+  resolveMenuImage(item).source;

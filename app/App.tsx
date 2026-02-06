@@ -16,6 +16,7 @@ import {
   LocationProvider,
   CartProvider,
   ToastProvider,
+  RewardsProvider,
 } from './src/store';
 
 // Navigation
@@ -43,12 +44,14 @@ const App: React.FC = () => {
         <NetworkProvider>
           <UserProvider>
             <LocationProvider>
-              <CartProvider>
-                <ToastProvider>
-                  <RootNavigator />
-                  <ToastDisplay />
-                </ToastProvider>
-              </CartProvider>
+              <RewardsProvider>
+                <CartProvider>
+                  <ToastProvider>
+                    <RootNavigator />
+                    <ToastDisplay />
+                  </ToastProvider>
+                </CartProvider>
+              </RewardsProvider>
             </LocationProvider>
           </UserProvider>
         </NetworkProvider>

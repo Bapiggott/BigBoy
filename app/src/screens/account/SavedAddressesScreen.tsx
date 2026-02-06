@@ -6,9 +6,10 @@ import {
   FlatList,
   TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius } from '../../theme';
-import { Card, Button } from '../../components';
+import { BrandedHeader, Card, Button } from '../../components';
 
 interface Address {
   id: string;
@@ -70,7 +71,8 @@ const SavedAddressesScreen: React.FC = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <BrandedHeader title="Saved Addresses" showBack />
       <FlatList
         data={addresses}
         keyExtractor={(item) => item.id}
@@ -92,7 +94,7 @@ const SavedAddressesScreen: React.FC = () => {
           />
         }
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

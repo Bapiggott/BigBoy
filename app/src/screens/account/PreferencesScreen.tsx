@@ -8,10 +8,10 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../../theme';
-import { Card } from '../../components/Card';
-import { OfflineBanner } from '../../components/OfflineBanner';
+import { BrandedHeader, Card, OfflineBanner } from '../../components';
 import { useNetwork } from '../../store/NetworkContext';
 import { useLocation } from '../../store/LocationContext';
 import { useToast } from '../../store/ToastContext';
@@ -69,7 +69,8 @@ const PreferencesScreen: React.FC = () => {
   ];
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <BrandedHeader title="Preferences" showBack />
       <OfflineBanner />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -264,7 +265,7 @@ const PreferencesScreen: React.FC = () => {
           </Card>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

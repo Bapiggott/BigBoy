@@ -2,13 +2,14 @@ import { apiClient } from '../client';
 import { Reward, UserReward, LoyaltyStatus } from '../../types';
 import { RedeemRewardRequest, RedeemRewardResponse } from '../types';
 import { mockRewards, loyaltyTiers } from '../../data/mockRewards';
+import { USE_MOCK } from '../../config';
 
 /**
  * Rewards API Endpoints
  * Currently returns mock data - swap implementation when backend is ready
  */
 
-const USE_MOCK = true;
+// Mock implementation flag - controlled via EXPO_PUBLIC_USE_MOCK
 
 // Mock user rewards (redeemed rewards)
 let mockUserRewards: UserReward[] = [];

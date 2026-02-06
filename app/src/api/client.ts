@@ -1,5 +1,6 @@
 import { appStorage } from '../utils/storage';
 import { ApiResponse } from '../types';
+import { API_BASE_URL } from '../config';
 
 /**
  * API Configuration
@@ -7,11 +8,15 @@ import { ApiResponse } from '../types';
  */
 const API_CONFIG = {
   // For local development with server running
-  BASE_URL: 'http://localhost:3001/api',
+  BASE_URL: API_BASE_URL ?? 'http://localhost:3001/api',
   // For production, this would be your actual API URL
   // BASE_URL: 'https://api.bigboy.com/v1',
   TIMEOUT: 10000,
 };
+
+if (__DEV__) {
+  console.log('[ApiClient] Base URL:', API_CONFIG.BASE_URL);
+}
 
 /**
  * HTTP Methods

@@ -9,11 +9,11 @@ import {
   Alert,
   Switch,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../../theme';
-import { Card } from '../../components/Card';
-import { Button } from '../../components/Button';
+import { BrandedHeader, Card, Button } from '../../components';
 import { useUser } from '../../store/UserContext';
 import { useNetwork } from '../../store/NetworkContext';
 import { useToast } from '../../store/ToastContext';
@@ -158,7 +158,8 @@ const AdminScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <BrandedHeader title="Admin Tools" showBack />
       {/* Warning Banner */}
       <View style={styles.warningBanner}>
         <Ionicons name="warning" size={20} color={colors.warning} />
@@ -349,7 +350,7 @@ const AdminScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.versionText}>Build: 2024.01.15.001</Text>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

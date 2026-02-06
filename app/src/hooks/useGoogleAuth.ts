@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
 import * as Google from 'expo-auth-session/providers/google';
 import * as AuthSession from 'expo-auth-session';
 import Constants from 'expo-constants';
@@ -23,6 +23,7 @@ export interface GoogleAuthResult {
   code?: string;
   codeVerifier?: string;
   redirectUri?: string;
+  clientId?: string;
   error?: string;
 }
 
@@ -30,7 +31,11 @@ export interface UseGoogleAuthReturn {
   request: Google.GoogleAuthRequestConfig | null;
   promptAsync: () => Promise<GoogleAuthResult>;
   isReady: boolean;
+  isConfigured: boolean;
   redirectUri: string;
+  androidClientId?: string;
+  webClientId?: string;
+  clientId?: string;
 }
 
 /**
@@ -38,7 +43,7 @@ export interface UseGoogleAuthReturn {
  *
  * For EAS development builds:
  * - Uses native Google Sign-In with Android client ID
- * - Redirect is handled via app scheme (bigboy://)
+ * - Redirect uses the googleusercontent native scheme
  *
  * For Expo Go (fallback):
  * - Uses Expo's auth proxy (auth.expo.io)
@@ -48,16 +53,26 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
   // Determine if we're in Expo Go or a standalone/dev build
   const isExpoGo = Constants.appOwnership === 'expo';
 
+  const androidClientPrefix = useMemo(() => {
+    if (!GOOGLE_ANDROID_CLIENT_ID) return '';
+    return GOOGLE_ANDROID_CLIENT_ID.split('.apps.googleusercontent.com')[0];
+  }, []);
+
+  const nativeRedirectUri = useMemo(() => {
+    if (!androidClientPrefix) return '';
+    return `com.googleusercontent.apps.${androidClientPrefix}:/oauthredirect`;
+  }, [androidClientPrefix]);
+
   // Build the redirect URI based on environment
   const redirectUri = isExpoGo
     ? AuthSession.makeRedirectUri({
         useProxy: true,
         projectNameForProxy: 'ojazaerly/bigboy-app',
       })
-    : AuthSession.makeRedirectUri({
-        scheme: 'com.bigboy.app',
-        path: 'oauthredirect',
-      });
+    : nativeRedirectUri;
+
+  const isConfigured = isExpoGo ? !!GOOGLE_WEB_CLIENT_ID : !!GOOGLE_ANDROID_CLIENT_ID && !!nativeRedirectUri;
+  const clientId = isExpoGo ? GOOGLE_WEB_CLIENT_ID : GOOGLE_ANDROID_CLIENT_ID;
 
   console.log('[GoogleAuth] Redirect URI:', redirectUri);
   console.log('[GoogleAuth] Is Expo Go:', isExpoGo);
@@ -75,7 +90,7 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
     usePKCE: true,
     codeChallengeMethod: AuthSession.CodeChallengeMethod.S256,
     scopes: ['openid', 'profile', 'email'],
-    redirectUri,
+    redirectUri: redirectUri || undefined,
     shouldAutoExchangeCode: false,
   });
 
@@ -125,6 +140,7 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
 
         console.log('[GoogleAuth] Success! Code received:', {
           hasCode: !!code,
+          codePrefix: code ? code.slice(0, 8) : undefined,
           hasCodeVerifier: !!codeVerifier,
         });
 
@@ -133,6 +149,7 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
           code,
           codeVerifier,
           redirectUri,
+          clientId,
         };
       }
 
@@ -154,13 +171,17 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
         error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
-  }, [request, promptAsyncBase]);
+  }, [request, promptAsyncBase, redirectUri, clientId, isExpoGo]);
 
   return {
     request: request as Google.GoogleAuthRequestConfig | null,
     promptAsync,
     isReady: !!request,
+    isConfigured,
     redirectUri,
+    androidClientId: GOOGLE_ANDROID_CLIENT_ID,
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+    clientId,
   };
 }
 

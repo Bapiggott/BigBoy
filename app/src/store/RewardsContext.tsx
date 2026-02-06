@@ -11,6 +11,18 @@ export type RewardRedemption = {
   status: 'active' | 'used';
 };
 
+export type RewardCoupon = {
+  id: string;
+  rewardId?: string;
+  title: string;
+  code?: string;
+  discountType: 'FREE_ITEM' | 'PERCENT' | 'FIXED';
+  value: number;
+  match?: string;
+  createdAt: string;
+  status: 'available' | 'applied' | 'used';
+};
+
 export type RedeemableReward = {
   id: string;
   name: string;
@@ -19,11 +31,14 @@ export type RedeemableReward = {
 
 type RewardsContextValue = {
   redemptions: RewardRedemption[];
-  activeRedemptions: RewardRedemption[];
-  appliedRedemptionId: string | null;
+  coupons: RewardCoupon[];
+  appliedCouponId: string | null;
+  appliedCoupon: RewardCoupon | null;
   points: number;
   redeemReward: (reward: RedeemableReward) => Promise<void>;
-  applyRedemption: (redemptionId: string | null) => void;
+  applyCoupon: (couponId: string | null) => void;
+  activeCoupons: RewardCoupon[];
+  promoCoupons: RewardCoupon[];
 };
 
 const RewardsContext = createContext<RewardsContextValue | undefined>(undefined);
@@ -35,8 +50,34 @@ type RewardsProviderProps = {
 export const RewardsProvider = ({ children }: RewardsProviderProps) => {
   const { user } = useUser();
   const [redemptions, setRedemptions] = useState<RewardRedemption[]>([]);
-  const [appliedRedemptionId, setAppliedRedemptionId] = useState<string | null>(null);
-  const [pointsDelta, setPointsDelta] = useState<number>(0);
+  const [coupons, setCoupons] = useState<RewardCoupon[]>([]);
+  const [appliedCouponId, setAppliedCouponId] = useState<string | null>(null);
+  const [points, setPoints] = useState<number>(0);
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  const promoCoupons: RewardCoupon[] = useMemo(
+    () => [
+      {
+        id: 'promo-seafood',
+        title: 'Seafood Fest',
+        code: 'SEAFOOD',
+        discountType: 'PERCENT',
+        value: 10,
+        createdAt: 'promo',
+        status: 'available',
+      },
+      {
+        id: 'promo-birthday',
+        title: 'Birthday Treat',
+        code: 'BIRTHDAY',
+        discountType: 'FIXED',
+        value: 5,
+        createdAt: 'promo',
+        status: 'available',
+      },
+    ],
+    []
+  );
 
   useEffect(() => {
     const load = async () => {
@@ -44,38 +85,68 @@ export const RewardsProvider = ({ children }: RewardsProviderProps) => {
       if (savedRedemptions && Array.isArray(savedRedemptions)) {
         setRedemptions(savedRedemptions);
       }
-      const savedApplied = await storage.getString(STORAGE_KEYS.APPLIED_REWARD_ID);
-      if (savedApplied) setAppliedRedemptionId(savedApplied);
-      const savedDelta = await storage.get<number>(STORAGE_KEYS.REWARD_POINTS_DELTA);
-      if (typeof savedDelta === 'number') setPointsDelta(savedDelta);
+      const savedCoupons = await storage.get<RewardCoupon[]>(STORAGE_KEYS.REWARD_COUPONS);
+      if (savedCoupons && Array.isArray(savedCoupons)) {
+        setCoupons(savedCoupons);
+      }
+      const savedApplied = await storage.get<string>(STORAGE_KEYS.APPLIED_COUPON_ID);
+      if (savedApplied) setAppliedCouponId(savedApplied);
+      const savedPoints = await storage.get<number>(STORAGE_KEYS.REWARD_POINTS);
+      const basePoints =
+        typeof savedPoints === 'number' ? savedPoints : user?.loyaltyStatus?.currentPoints ?? 0;
+      if (__DEV__ && basePoints === 0 && user?.email?.toLowerCase().includes('john')) {
+        setPoints(1250);
+      } else {
+        setPoints(basePoints);
+      }
+      setHasLoaded(true);
     };
     load();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     storage.set(STORAGE_KEYS.REWARD_REDEMPTIONS, redemptions);
   }, [redemptions]);
 
   useEffect(() => {
-    if (appliedRedemptionId) {
-      storage.setString(STORAGE_KEYS.APPLIED_REWARD_ID, appliedRedemptionId);
+    storage.set(STORAGE_KEYS.REWARD_COUPONS, coupons);
+  }, [coupons]);
+
+  useEffect(() => {
+    if (appliedCouponId) {
+      storage.set(STORAGE_KEYS.APPLIED_COUPON_ID, appliedCouponId);
     } else {
-      storage.remove(STORAGE_KEYS.APPLIED_REWARD_ID);
+      storage.remove(STORAGE_KEYS.APPLIED_COUPON_ID);
     }
-  }, [appliedRedemptionId]);
+  }, [appliedCouponId]);
 
   useEffect(() => {
-    if (appliedRedemptionId && !redemptions.find((r) => r.redemptionId === appliedRedemptionId)) {
-      setAppliedRedemptionId(null);
+    if (hasLoaded) {
+      storage.set(STORAGE_KEYS.REWARD_POINTS, points);
     }
-  }, [redemptions, appliedRedemptionId]);
+  }, [hasLoaded, points]);
 
-  useEffect(() => {
-    storage.set(STORAGE_KEYS.REWARD_POINTS_DELTA, pointsDelta);
-  }, [pointsDelta]);
+  const createCouponForReward = (reward: RedeemableReward): RewardCoupon => {
+    const lower = reward.name.toLowerCase();
+    const match =
+      lower.includes('fries') ? 'fries' :
+      lower.includes('salad') ? 'salad' :
+      lower.includes('burger') ? 'burger' :
+      lower.includes('shake') ? 'shake' :
+      lower.includes('dessert') || lower.includes('pie') ? 'dessert' :
+      undefined;
 
-  const basePoints = user?.loyaltyStatus?.currentPoints ?? 0;
-  const points = Math.max(0, basePoints + pointsDelta);
+    return {
+      id: `coupon-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      rewardId: reward.id,
+      title: reward.name,
+      discountType: lower.includes('free') ? 'FREE_ITEM' : 'FIXED',
+      value: lower.includes('free') ? 0 : 2,
+      match,
+      createdAt: new Date().toISOString(),
+      status: 'available',
+    };
+  };
 
   const redeemReward = async (reward: RedeemableReward) => {
     if (points < reward.pointsCost) return;
@@ -87,28 +158,53 @@ export const RewardsProvider = ({ children }: RewardsProviderProps) => {
       createdAt: new Date().toISOString(),
       status: 'active',
     };
+    const coupon = createCouponForReward(reward);
     setRedemptions((prev) => [...prev, redemption]);
-    setPointsDelta((prev) => prev - reward.pointsCost);
+    setCoupons((prev) => [...prev, coupon]);
+    setPoints((prev) => Math.max(0, prev - reward.pointsCost));
   };
 
-  const applyRedemption = (redemptionId: string | null) => {
-    setAppliedRedemptionId(redemptionId);
+  const applyCoupon = (couponId: string | null) => {
+    setAppliedCouponId(couponId);
+    setCoupons((prev) =>
+      prev.map((c) =>
+        c.id === couponId
+          ? { ...c, status: 'applied' }
+          : c.status === 'applied'
+            ? { ...c, status: 'available' }
+            : c
+      )
+    );
   };
 
-  const activeRedemptions = useMemo(
-    () => redemptions.filter((r) => r.status === 'active'),
-    [redemptions]
+  const activeCoupons = useMemo(
+    () => [...coupons.filter((c) => c.status !== 'used'), ...promoCoupons],
+    [coupons, promoCoupons]
   );
+
+  const appliedCoupon = useMemo(
+    () => activeCoupons.find((c) => c.id === appliedCouponId) ?? null,
+    [activeCoupons, appliedCouponId]
+  );
+
+  useEffect(() => {
+    if (appliedCouponId && !activeCoupons.find((c) => c.id === appliedCouponId)) {
+      setAppliedCouponId(null);
+    }
+  }, [activeCoupons, appliedCouponId]);
 
   return (
     <RewardsContext.Provider
       value={{
         redemptions,
-        activeRedemptions,
-        appliedRedemptionId,
+        coupons,
+        appliedCouponId,
+        appliedCoupon,
         points,
         redeemReward,
-        applyRedemption,
+        applyCoupon,
+        activeCoupons,
+        promoCoupons,
       }}
     >
       {children}

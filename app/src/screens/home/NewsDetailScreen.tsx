@@ -45,7 +45,7 @@ const NewsDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   if (!newsItem) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
-        <BrandedHeader title="News" />
+        <BrandedHeader title="News" showBack />
         <CheckerStrip />
         <View style={styles.emptyState}>
           <Ionicons name="alert-circle" size={48} color={colors.text.tertiary} />
@@ -57,7 +57,7 @@ const NewsDetailScreen: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <BrandedHeader title="News" />
+      <BrandedHeader title="News" showBack />
       <CheckerStrip />
 
       <ScrollView contentContainerStyle={styles.content}>

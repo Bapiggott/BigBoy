@@ -29,16 +29,15 @@ const __dirname = path.dirname(__filename);
 const MENU_SOURCE_PATH = path.join(__dirname, 'menu_source', 'bigboy.menu.json');
 
 const DEFAULT_PRICE_BY_CATEGORY_SLUG: Record<string, number> = {
-  'current-promotion': 12.99,
-  appetizers: 8.99,
-  'sides-drinks': 3.49,
-  breakfast: 9.99,
-  burgers: 12.99,
-  'sandwiches-and-wraps': 11.99,
-  'soups-salads': 9.49,
-  dinners: 14.99,
-  desserts: 5.99,
-  'kids-meals': 6.99,
+  appetizers: 7.99,
+  'sides-drinks': 4.99,
+  breakfast: 8.49,
+  burgers: 11.49,
+  'sandwiches-and-wraps': 10.49,
+  'soups-salads': 8.49,
+  dinners: 13.99,
+  desserts: 4.99,
+  'kids-meals': 6.49,
 };
 
 const loadMenuSource = async (): Promise<MenuSource> => {
@@ -200,10 +199,13 @@ async function main() {
 
   // ============ MENU SOURCE ============
   const menuSource = await loadMenuSource();
+  const filteredCategories = menuSource.categories.filter((category) => category.slug !== 'current-promotion');
+  const filteredCategoryIds = new Set(filteredCategories.map((category) => category.id));
+  const filteredItems = menuSource.items.filter((item) => filteredCategoryIds.has(item.categoryId));
 
   // ============ CATEGORIES ============
   const categories = await prisma.category.createMany({
-    data: menuSource.categories.map((category, index) => ({
+    data: filteredCategories.map((category, index) => ({
       id: category.id,
       name: category.name,
       slug: category.slug,
@@ -310,14 +312,9 @@ async function main() {
   console.log('✓ Created modifier groups');
 
   // ============ MENU ITEMS ============
-  const categoriesById = new Map(menuSource.categories.map((category) => [category.id, category]));
-  const promotionCategoryIds = new Set(
-    menuSource.categories
-      .filter((category) => category.slug === 'current-promotion')
-      .map((category) => category.id)
-  );
+  const categoriesById = new Map(filteredCategories.map((category) => [category.id, category]));
 
-  const menuItemsData = menuSource.items.map((item) => {
+  const menuItemsData = filteredItems.map((item) => {
     const category = categoriesById.get(item.categoryId);
     const categorySlug = category?.slug ?? 'uncategorized';
     const price = DEFAULT_PRICE_BY_CATEGORY_SLUG[categorySlug] ?? 9.99;
@@ -332,7 +329,7 @@ async function main() {
       calories: item.calories ?? null,
       prepTime: null,
       isPopular: false,
-      isNew: promotionCategoryIds.has(item.categoryId),
+      isNew: false,
       isAvailable: true,
     };
   });

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -16,15 +16,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { colors, typography, spacing, borderRadius, shadows } from '../../theme';
-import { useCart, useLocation } from '../../store';
-import { Card } from '../../components/Card';
-import { OfflineBanner } from '../../components/OfflineBanner';
+import { useLocation } from '../../store';
+import { BrandedHeader, CheckerStrip, Card, OfflineBanner } from '../../components';
 import { getCategories, getMenuItems, searchMenuItems } from '../../api';
+import { getMenuSource } from '../../api/endpoints/menu';
+import { API_BASE_URL } from '../../config';
 import { MenuCategory, MenuItem } from '../../types';
 import { resolveMenuImage, MENU_IMAGE_PLACEHOLDER } from '../../assets/menuImageMap';
 
+const MENU_PLACEHOLDER_IMAGES = [
+  require('../../../assets/brand/bigboy-logo-modern.png'),
+];
+
 type MenuStackParamList = {
-  Menu: { categoryId?: string };
+  Menu: { categoryId?: string; initialCategoryId?: string };
   MenuItemDetail: { itemId: string };
   Cart: undefined;
 };
@@ -33,56 +38,146 @@ type Props = NativeStackScreenProps<MenuStackParamList, 'Menu'>;
 
 const MenuItemImage: React.FC<{ item: MenuItem; style?: StyleProp<ImageStyle> }> = ({ item, style }) => {
   const resolved = resolveMenuImage(item);
-  const [source, setSource] = useState(resolved.source);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    setSource(resolved.source);
+    setFailed(false);
   }, [item.id, item.imageUrl, item.image]);
+
+  const isPlaceholder = failed || resolved.source === MENU_IMAGE_PLACEHOLDER;
 
   return (
     <Image
-      source={source}
+      source={failed ? MENU_IMAGE_PLACEHOLDER : resolved.source}
       style={style}
-      resizeMode="cover"
-      onError={() => setSource(MENU_IMAGE_PLACEHOLDER)}
+      resizeMode={isPlaceholder ? 'contain' : 'cover'}
+      onError={() => setFailed(true)}
     />
   );
 };
 
 const MenuScreen: React.FC<Props> = ({ navigation, route }) => {
   const { selectedLocation } = useLocation();
-  const { itemCount } = useCart();
-
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [menuSource, setMenuSource] = useState<'api' | 'mock'>('api');
+  const [healthStatus, setHealthStatus] = useState<'unknown' | 'ok' | 'error'>('unknown');
+  const [healthMessage, setHealthMessage] = useState<string | null>(null);
+  const lastAppliedParam = useRef<string | null>(null);
 
   const categoryTabs = useMemo(
     () => [{ id: 'all', name: 'All' } as const, ...categories],
     [categories]
   );
 
+  const checkServerHealth = useCallback(async (): Promise<boolean> => {
+    const serverBase = API_BASE_URL.replace(/\/api\/?$/, '');
+    const healthUrl = `${serverBase}/health`;
+
+    if (__DEV__) {
+      console.log('[Menu] Network Debug', { baseUrl: API_BASE_URL, healthUrl });
+    }
+
+    try {
+      const response = await fetch(healthUrl);
+      if (__DEV__) {
+        console.log('[Menu] Health check result', { status: response.status });
+      }
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      setHealthStatus('ok');
+      setHealthMessage(null);
+      return true;
+    } catch (error) {
+      if (__DEV__) {
+        console.log('[Menu] Health check failed', error);
+      }
+      setHealthStatus('error');
+      setHealthMessage(`Can't reach server at ${serverBase}. Using offline menu.`);
+      return false;
+    }
+  }, []);
+
   const fetchData = useCallback(async () => {
     setIsLoading(true);
+    setErrorMessage(null);
     try {
-      const [cats, items] = await Promise.all([getCategories(), getMenuItems()]);
-      setCategories(cats);
-      setMenuItems(items);
+      await checkServerHealth();
+      const locationId = typeof selectedLocation === 'string'
+        ? selectedLocation
+        : selectedLocation?.id ?? '';
 
-      if (route.params?.categoryId) setSelectedCategory(route.params.categoryId);
+      if (__DEV__) {
+        const categoriesEndpoint = `/menu/categories${locationId ? `?locationId=${encodeURIComponent(locationId)}` : ''}`;
+        const itemsEndpoint = `/menu/items${locationId ? `?locationId=${encodeURIComponent(locationId)}` : ''}`;
+        console.log('[Menu] Fetching', {
+          baseUrl: API_BASE_URL,
+          locationId,
+          categoriesEndpoint,
+          itemsEndpoint,
+        });
+      }
+
+      const [cats, items] = await Promise.all([
+        getCategories(locationId || undefined),
+        getMenuItems(locationId || undefined),
+      ]);
+      const filteredCategories = cats.filter(
+        (category) =>
+          category.id !== 'cat-current-promotion' &&
+          category.slug !== 'current-promotion' &&
+          category.name !== 'Current Promotion'
+      );
+      const filteredItems = items.filter(
+        (item) =>
+          item.categoryId !== 'cat-current-promotion' &&
+          item.category?.slug !== 'current-promotion' &&
+          item.category?.name !== 'Current Promotion'
+      );
+      setCategories(filteredCategories);
+      setMenuItems(filteredItems);
+      setMenuSource(getMenuSource());
+
+      if (__DEV__) {
+        const payload = JSON.stringify({ categories: filteredCategories, items: filteredItems }, null, 2).slice(0, 800);
+        console.log('[Menu] Response preview', payload);
+      }
+
     } catch (error) {
       console.error('Failed to load menu:', error);
+      setErrorMessage('Failed to load menu.');
     } finally {
       setIsLoading(false);
     }
-  }, [route.params?.categoryId]);
+  }, [checkServerHealth, route.params?.categoryId, selectedLocation]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    const paramCategory = route.params?.initialCategoryId ?? route.params?.categoryId;
+    if (!paramCategory) return;
+
+    if (paramCategory === 'cat-current-promotion' || paramCategory === 'current-promotion') {
+      setSelectedCategory('all');
+      navigation.setParams({ categoryId: undefined, initialCategoryId: undefined });
+      return;
+    }
+
+    if (paramCategory !== lastAppliedParam.current) {
+      setSelectedCategory(paramCategory);
+      setSearchQuery('');
+      lastAppliedParam.current = paramCategory;
+      navigation.setParams({ categoryId: undefined, initialCategoryId: undefined });
+    }
+  }, [navigation, route.params?.categoryId, route.params?.initialCategoryId]);
 
   const onRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -99,6 +194,7 @@ const MenuScreen: React.FC<Props> = ({ navigation, route }) => {
         const results = await searchMenuItems(trimmed);
         setMenuItems(results);
         setSelectedCategory('search');
+        setMenuSource(getMenuSource());
       } catch (error) {
         console.error('Search failed:', error);
       }
@@ -107,21 +203,31 @@ const MenuScreen: React.FC<Props> = ({ navigation, route }) => {
 
     if (trimmed.length === 0) {
       try {
-        const items = await getMenuItems();
+        const locationId = typeof selectedLocation === 'string'
+          ? selectedLocation
+          : selectedLocation?.id ?? '';
+        const items = await getMenuItems(locationId || undefined);
         setMenuItems(items);
         setSelectedCategory('all');
+        setMenuSource(getMenuSource());
       } catch (error) {
         console.error('Failed to reset menu:', error);
       }
     }
-  }, []);
+  }, [selectedLocation]);
 
   const filteredItems = useMemo(() => {
     if (selectedCategory === 'all' || selectedCategory === 'search') return menuItems;
     return menuItems.filter((item) => item.categoryId === selectedCategory);
   }, [menuItems, selectedCategory]);
 
-  const formatPrice = (price: number) => `$${price.toFixed(2)}`;
+  const normalizePrice = (price: number) => {
+    if (!Number.isFinite(price)) return 0;
+    if (price >= 1000) return price / 100;
+    if (price >= 100 && Number.isInteger(price)) return price / 100;
+    return price;
+  };
+  const formatPrice = (price: number) => `$${normalizePrice(price).toFixed(2)}`;
 
   const renderCategoryTab = ({ item }: { item: { id: string; name: string } }) => {
     const isActive = selectedCategory === item.id;
@@ -135,7 +241,11 @@ const MenuScreen: React.FC<Props> = ({ navigation, route }) => {
         accessibilityRole="tab"
         accessibilityState={{ selected: isActive }}
       >
-        <Text style={[styles.categoryTabText, isActive && styles.categoryTabTextActive]}>
+        <Text
+          style={[styles.categoryTabText, isActive && styles.categoryTabTextActive]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
           {item.name}
         </Text>
       </TouchableOpacity>
@@ -187,30 +297,54 @@ const MenuScreen: React.FC<Props> = ({ navigation, route }) => {
     );
   };
 
+  const placeholderItems = [
+    { id: 'ph-1', name: 'Classic Big Boy', price: 9.99, image: MENU_PLACEHOLDER_IMAGES[0] },
+    { id: 'ph-2', name: 'Strawberry Shake', price: 5.49, image: MENU_PLACEHOLDER_IMAGES[0] },
+    { id: 'ph-3', name: 'Fish & Chips', price: 11.99, image: MENU_PLACEHOLDER_IMAGES[0] },
+    { id: 'ph-4', name: 'Shrimp Basket', price: 10.49, image: MENU_PLACEHOLDER_IMAGES[0] },
+  ];
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <OfflineBanner />
+      <BrandedHeader title="Menu" />
+      <CheckerStrip />
 
       <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <Text style={styles.headerTitle}>Menu</Text>
-
-          <TouchableOpacity
-            style={styles.cartButton}
-            onPress={() => navigation.navigate('Cart')}
-            accessibilityLabel={`View cart with ${itemCount} items`}
-          >
-            <Ionicons name="cart" size={22} color={colors.text.primary} />
-            {itemCount > 0 && (
-              <View style={styles.cartBadge}>
-                <Text style={styles.cartBadgeText}>{itemCount}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
-
         {selectedLocation && (
           <Text style={styles.locationText}>Ordering from {selectedLocation.name}</Text>
+        )}
+        {!selectedLocation && (
+          <View style={styles.mockBanner}>
+            <Ionicons name="location" size={16} color={colors.text.secondary} />
+            <Text style={styles.mockBannerText}>Select a location to see menu</Text>
+          </View>
+        )}
+
+        {selectedCategory !== 'all' && selectedCategory !== 'search' && (
+          <TouchableOpacity
+            style={styles.clearFilter}
+            onPress={() => setSelectedCategory('all')}
+            accessibilityRole="button"
+            accessibilityLabel="Clear category filter"
+          >
+            <Ionicons name="close" size={14} color={colors.text.primary} />
+            <Text style={styles.clearFilterText}>Clear filter</Text>
+          </TouchableOpacity>
+        )}
+
+        {menuSource === 'mock' && (
+          <View style={styles.mockBanner}>
+            <Ionicons name="cloud-offline-outline" size={16} color={colors.text.secondary} />
+            <Text style={styles.mockBannerText}>
+              {healthStatus === 'error'
+                ? healthMessage ?? 'Can\'t reach server. Using offline menu.'
+                : 'Using offline menu (API error)'}
+            </Text>
+            <TouchableOpacity onPress={fetchData} style={styles.retryButton}>
+              <Text style={styles.retryText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
         )}
 
         <View style={styles.searchContainer}>
@@ -254,8 +388,26 @@ const MenuScreen: React.FC<Props> = ({ navigation, route }) => {
           <View style={styles.emptyState}>
             <Ionicons name="restaurant-outline" size={44} color={colors.text.tertiary} />
             <Text style={styles.emptyText}>
-              {isLoading ? 'Loading menu...' : 'No items found'}
+              {isLoading
+                ? 'Loading menu...'
+                : errorMessage
+                  ? 'Failed to load menu'
+                  : 'No items available for this location'}
             </Text>
+            <TouchableOpacity style={styles.retryButton} onPress={fetchData}>
+              <Text style={styles.retryText}>Reload menu</Text>
+            </TouchableOpacity>
+            <View style={styles.placeholderGrid}>
+              {placeholderItems.map((item) => (
+                <View key={item.id} style={styles.placeholderCard}>
+                  <Image source={item.image} style={styles.placeholderImage} resizeMode="contain" />
+                  <View style={styles.placeholderInfo}>
+                    <Text style={styles.placeholderName} numberOfLines={1}>{item.name}</Text>
+                    <Text style={styles.placeholderPrice}>{formatPrice(item.price)}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
           </View>
         }
       />
@@ -279,30 +431,54 @@ const styles = StyleSheet.create({
   },
   headerTitle: { ...typography.headlineMedium, color: colors.text.primary },
 
-  cartButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...shadows.sm,
-  },
-  cartBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    backgroundColor: colors.primary.main,
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 5,
-  },
-  cartBadgeText: { ...typography.labelSmall, color: colors.white, fontWeight: '700' },
-
   locationText: { ...typography.labelMedium, color: colors.text.secondary, marginBottom: spacing.md },
+  clearFilter: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.warmGray,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    marginBottom: spacing.sm,
+  },
+  clearFilterText: {
+    ...typography.labelSmall,
+    color: colors.text.primary,
+    fontWeight: '600',
+  },
+  mockBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    padding: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    marginBottom: spacing.md,
+  },
+  mockBannerText: {
+    ...typography.bodySmall,
+    color: colors.text.secondary,
+    flex: 1,
+  },
+  retryButton: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.warmGray,
+    borderWidth: 1,
+    borderColor: colors.border.main,
+  },
+  retryText: {
+    ...typography.labelSmall,
+    color: colors.text.primary,
+    fontWeight: '600',
+  },
 
   searchContainer: {
     flexDirection: 'row',
@@ -317,21 +493,29 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, marginLeft: spacing.sm, ...typography.bodyMedium, color: colors.text.primary },
   clearBtn: { paddingLeft: spacing.sm },
 
-  categoriesList: { maxHeight: 52, backgroundColor: colors.background },
+  categoriesList: { backgroundColor: colors.background },
   categoriesContainer: { paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
 
   categoryTab: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
+    minHeight: 52,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.xs,
     marginRight: spacing.sm,
     borderRadius: borderRadius.full,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border.main,
+    borderColor: colors.primary.main,
+    justifyContent: 'center',
   },
   categoryTabActive: { backgroundColor: colors.primary.main, borderColor: colors.primary.main },
-  categoryTabText: { ...typography.labelMedium, color: colors.text.secondary },
-  categoryTabTextActive: { color: colors.white },
+  categoryTabText: {
+    ...typography.labelMedium,
+    color: colors.primary.main,
+    fontWeight: '600',
+    lineHeight: typography.labelMedium.lineHeight,
+    maxWidth: 160,
+  },
+  categoryTabTextActive: { color: colors.white, fontWeight: '700' },
 
   menuItemsContainer: { padding: spacing.lg, paddingTop: spacing.sm },
   menuItemsRow: { justifyContent: 'space-between', marginBottom: spacing.md },
@@ -370,7 +554,30 @@ const styles = StyleSheet.create({
   menuItemCalories: { ...typography.labelSmall, color: colors.text.tertiary },
 
   emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: spacing['4xl'] },
-  emptyText: { ...typography.bodyMedium, color: colors.text.secondary, marginTop: spacing.md },
+  emptyText: { ...typography.bodyMedium, color: colors.text.secondary, marginTop: spacing.md, textAlign: 'center' },
+  placeholderGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.md,
+    marginTop: spacing.lg,
+    justifyContent: 'center',
+  },
+  placeholderCard: {
+    width: 140,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    overflow: 'hidden',
+    ...shadows.sm,
+  },
+  placeholderImage: { width: '100%', height: 90 },
+  placeholderInfo: { padding: spacing.sm },
+  placeholderName: { ...typography.labelMedium, color: colors.text.primary },
+  placeholderPrice: {
+    ...typography.labelSmall,
+    color: colors.primary.main,
+    fontWeight: '700',
+    marginTop: spacing.xs,
+  },
 });
 
 export default MenuScreen;

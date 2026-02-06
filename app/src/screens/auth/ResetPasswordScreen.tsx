@@ -17,32 +17,42 @@ import { useToast } from '../../store';
 import * as authApi from '../../api/endpoints/auth';
 import { AuthStackParamList } from '../../navigation/types';
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
+type Props = NativeStackScreenProps<AuthStackParamList, 'ResetPassword'>;
 
-const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
+const ResetPasswordScreen: React.FC<Props> = ({ navigation }) => {
   const { showToast } = useToast();
-  const [email, setEmail] = useState('');
+  const [token, setToken] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    const trimmed = email.trim();
-    if (!trimmed || !/\S+@\S+\.\S+/.test(trimmed)) {
-      setError('Please enter a valid email address');
+    if (!token.trim()) {
+      setError('Reset token is required');
       return;
     }
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+    if (password !== confirm) {
+      setError('Passwords do not match');
+      return;
+    }
+
     setError(null);
     setIsSubmitting(true);
     try {
-      const ok = await authApi.requestPasswordReset(trimmed);
+      const ok = await authApi.resetPassword(token.trim(), password);
       if (ok) {
-        showToast('If an account exists, we’ll email a reset link.', 'success');
-        navigation.navigate('ResetPassword');
+        showToast('Password reset. Please sign in.', 'success');
+        navigation.navigate('Login');
       } else {
-        showToast('Unable to request reset. Try again.', 'error');
+        showToast('Reset failed. Check token and try again.', 'error');
       }
     } catch (err) {
-      console.error('Forgot password failed:', err);
+      console.error('Reset password failed:', err);
       showToast('Something went wrong. Please try again.', 'error');
     } finally {
       setIsSubmitting(false);
@@ -57,30 +67,56 @@ const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
       >
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
-            <Text style={styles.title}>Reset Password</Text>
+            <Text style={styles.title}>Set New Password</Text>
             <Text style={styles.subtitle}>
-              Enter your email and we’ll send a reset link.
+              Paste your reset token and choose a new password.
             </Text>
           </View>
 
           <View style={styles.form}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>Reset Token</Text>
             <TextInput
               style={[styles.input, error && styles.inputError]}
-              placeholder="your@email.com"
+              placeholder="Paste token from email"
               placeholderTextColor={colors.text.tertiary}
-              value={email}
+              value={token}
               onChangeText={(text) => {
-                setEmail(text);
+                setToken(text);
                 if (error) setError(null);
               }}
-              keyboardType="email-address"
               autoCapitalize="none"
             />
+
+            <Text style={styles.label}>New Password</Text>
+            <TextInput
+              style={[styles.input, error && styles.inputError]}
+              placeholder="New password"
+              placeholderTextColor={colors.text.tertiary}
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (error) setError(null);
+              }}
+              secureTextEntry
+            />
+
+            <Text style={styles.label}>Confirm Password</Text>
+            <TextInput
+              style={[styles.input, error && styles.inputError]}
+              placeholder="Confirm password"
+              placeholderTextColor={colors.text.tertiary}
+              value={confirm}
+              onChangeText={(text) => {
+                setConfirm(text);
+                if (error) setError(null);
+              }}
+              secureTextEntry
+            />
+
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <Button
-              title={isSubmitting ? 'Sending...' : 'Send reset link'}
+              title={isSubmitting ? 'Resetting...' : 'Reset Password'}
               onPress={handleSubmit}
               disabled={isSubmitting}
               style={styles.submitButton}
@@ -113,7 +149,7 @@ const styles = StyleSheet.create({
   title: { ...typography.headlineMedium, color: colors.text.primary },
   subtitle: { ...typography.bodyMedium, color: colors.text.secondary, marginTop: spacing.sm },
   form: { marginTop: spacing.lg },
-  label: { ...typography.labelLarge, color: colors.text.primary, marginBottom: spacing.sm },
+  label: { ...typography.labelLarge, color: colors.text.primary, marginTop: spacing.md },
   input: {
     backgroundColor: colors.surface,
     borderWidth: 1,
@@ -123,12 +159,13 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     ...typography.bodyLarge,
     color: colors.text.primary,
+    marginTop: spacing.sm,
   },
   inputError: { borderColor: colors.error },
-  errorText: { ...typography.labelSmall, color: colors.error, marginTop: spacing.xs },
+  errorText: { ...typography.labelSmall, color: colors.error, marginTop: spacing.sm },
   submitButton: { marginTop: spacing.lg },
   backLink: { marginTop: spacing.lg, alignSelf: 'center' },
   backLinkText: { ...typography.labelLarge, color: colors.primary.main },
 });
 
-export default ForgotPasswordScreen;
+export default ResetPasswordScreen;

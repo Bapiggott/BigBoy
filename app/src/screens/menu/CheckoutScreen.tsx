@@ -259,6 +259,12 @@ const CheckoutScreen: React.FC = () => {
             <Text style={styles.summaryLabel}>Subtotal</Text>
             <Text style={styles.summaryValue}>${cart.subtotal.toFixed(2)}</Text>
           </View>
+          {cart.discount > 0 && (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Discount</Text>
+              <Text style={styles.summaryValue}>- ${cart.discount.toFixed(2)}</Text>
+            </View>
+          )}
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Tax</Text>
             <Text style={styles.summaryValue}>${cart.tax.toFixed(2)}</Text>

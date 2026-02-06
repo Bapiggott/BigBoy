@@ -24,7 +24,8 @@ const AccountStack: React.FC = () => {
         headerStyle: {
           backgroundColor: colors.background,
         },
-        headerTintColor: colors.text.primary,
+        headerTintColor: '#000',
+        headerBackTitleVisible: false,
         headerTitleStyle: {
           fontWeight: '600',
         },
@@ -34,62 +35,57 @@ const AccountStack: React.FC = () => {
       <Stack.Screen
         name="Account"
         component={AccountScreen}
-        options={{ title: 'Account' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Profile"
         component={ProfileScreen}
-        options={{ title: 'Profile' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="PaymentMethods"
         component={PaymentMethodsScreen}
-        options={{ title: 'Payment Methods' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="SavedAddresses"
         component={SavedAddressesScreen}
-        options={{ title: 'Saved Addresses' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="GiftCards"
         component={GiftCardsScreen}
-        options={{ title: 'Gift Cards' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Notifications"
         component={NotificationsScreen}
-        options={{ title: 'Notifications' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Preferences"
         component={PreferencesScreen}
-        options={{ title: 'Preferences' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="OrderHistory"
         component={OrderHistoryScreen}
-        options={{ title: 'Order History' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="OrderDetail"
         component={OrderDetailScreen}
-        options={{ title: 'Order Details' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="HelpSupport"
         component={HelpSupportScreen}
-        options={{ title: 'Help & Support' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Admin"
         component={AdminScreen}
-        options={{ 
-          title: 'Admin Tools',
-          headerStyle: {
-            backgroundColor: colors.warning,
-          },
-        }}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

@@ -7,9 +7,10 @@ import {
   RefreshControl,
   Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius } from '../../theme';
-import { Card, Button, LoadingScreen } from '../../components';
+import { BrandedHeader, Card, Button, LoadingScreen } from '../../components';
 import { Order } from '../../types';
 import * as ordersApi from '../../api/endpoints/orders';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -110,13 +111,14 @@ const OrderDetailScreen = ({ route }: Props) => {
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
-      }
-    >
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <BrandedHeader title="Order Details" showBack />
+      <ScrollView
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+        }
+      >
       {/* Order Status */}
       <Card style={styles.statusCard}>
         <View style={styles.statusHeader}>
@@ -228,7 +230,8 @@ const OrderDetailScreen = ({ route }: Props) => {
           />
         </View>
       )}
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

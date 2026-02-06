@@ -1,14 +1,14 @@
 import { apiClient } from '../client';
 import { LoginRequest, LoginResponse, RegisterRequest } from '../types';
 import { User } from '../../types';
+import { USE_MOCK } from '../../config';
 
 /**
  * Auth API Endpoints
  * Currently returns mock data - swap implementation when backend is ready
  */
 
-// Mock implementation flag - set to false when backend is ready
-const USE_MOCK = true;
+// Mock implementation flag - controlled via EXPO_PUBLIC_USE_MOCK
 
 /**
  * Login user
@@ -174,6 +174,21 @@ export const requestPasswordReset = async (email: string): Promise<boolean> => {
 };
 
 /**
+ * Reset password with token
+ */
+export const resetPassword = async (token: string, newPassword: string): Promise<boolean> => {
+  if (USE_MOCK) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return true;
+  }
+
+  const response = await apiClient.post('/auth/reset-password', { token, newPassword }, {
+    requiresAuth: false,
+  });
+  return response.success;
+};
+
+/**
  * Google Sign-In
  * Sends the Google ID token to the backend for verification
  */
@@ -247,6 +262,7 @@ export const googleLoginWithAuthCode = async (payload: {
   code: string;
   codeVerifier: string;
   redirectUri: string;
+  clientId?: string;
 }): Promise<{ token: string; user: User } | null> => {
   if (USE_MOCK) {
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -273,9 +289,13 @@ export const googleLoginWithAuthCode = async (payload: {
     requiresAuth: false,
   });
 
-  if (response.success && response.data) {
+  if (!response.success) {
+    throw new Error(response.error || 'Google login failed');
+  }
+
+  if (response.data) {
     return response.data;
   }
 
-  return null;
+  throw new Error('Google login failed: empty response');
 };

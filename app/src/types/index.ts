@@ -84,6 +84,8 @@ export interface Location {
   state: string;
   zipCode: string;
   phone: string;
+  county?: string;
+  status?: 'open' | 'coming_soon' | 'tbd';
   latitude?: number;
   longitude?: number;
   hours?: LocationHours;
@@ -163,11 +165,16 @@ export interface CartItem {
   modifiers?: CartItemModifier[];
   specialInstructions?: string;
   image?: string;
+  ingredientOptions?: string[];
+  selectedIngredients?: string[];
+  addOnOptions?: { name: string; priceAdjustment: number }[];
+  selectedAddOns?: string[];
 }
 
 export interface Cart {
   items: CartItem[];
   subtotal: number;
+  discount: number;
   tax: number;
   total: number;
 }

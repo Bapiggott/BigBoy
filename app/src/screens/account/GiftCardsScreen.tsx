@@ -9,11 +9,10 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../../theme';
-import { Card } from '../../components/Card';
-import { Button } from '../../components/Button';
-import { OfflineBanner } from '../../components/OfflineBanner';
+import { BrandedHeader, Card, Button, OfflineBanner } from '../../components';
 import { useNetwork } from '../../store/NetworkContext';
 import { useToast } from '../../store/ToastContext';
 
@@ -107,7 +106,8 @@ const GiftCardsScreen: React.FC = () => {
   const totalBalance = giftCards.reduce((sum, card) => sum + card.balance, 0);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <BrandedHeader title="Gift Cards" showBack />
       <OfflineBanner />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -241,7 +241,7 @@ const GiftCardsScreen: React.FC = () => {
           </View>
         </Card>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

@@ -7,13 +7,12 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../../theme';
-import { Card } from '../../components/Card';
-import { LoadingScreen } from '../../components/LoadingScreen';
-import { OfflineBanner } from '../../components/OfflineBanner';
+import { BrandedHeader, Card, LoadingScreen, OfflineBanner } from '../../components';
 import { useNetwork } from '../../store/NetworkContext';
 import { Order } from '../../types';
 import * as ordersApi from '../../api/endpoints/orders';
@@ -205,7 +204,8 @@ const OrderHistoryScreen: React.FC = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <BrandedHeader title="Order History" showBack />
       <OfflineBanner />
       <FlatList
         data={filteredOrders}
@@ -219,7 +219,7 @@ const OrderHistoryScreen: React.FC = () => {
         }
         showsVerticalScrollIndicator={false}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

@@ -6,9 +6,10 @@ import {
   FlatList,
   TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius } from '../../theme';
-import { Card, Button } from '../../components';
+import { BrandedHeader, Card, Button } from '../../components';
 
 interface PaymentMethod {
   id: string;
@@ -73,7 +74,8 @@ const PaymentMethodsScreen: React.FC = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <BrandedHeader title="Payment Methods" showBack />
       <FlatList
         data={paymentMethods}
         keyExtractor={(item) => item.id}
@@ -95,7 +97,7 @@ const PaymentMethodsScreen: React.FC = () => {
           />
         }
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

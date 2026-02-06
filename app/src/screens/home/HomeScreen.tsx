@@ -1,49 +1,70 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
+  ScrollView,
   TouchableOpacity,
+  ImageBackground,
   Image,
   RefreshControl,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { colors, typography, spacing, borderRadius, shadows } from '../../theme';
-import { useUser, useLocation, useNetwork, useCart } from '../../store';
-import { Card } from '../../components/Card';
-import { OfflineBanner } from '../../components/OfflineBanner';
-import { getPopularItems, getRecentOrders } from '../../api';
-import { MenuItem, Order } from '../../types';
+import { BrandedHeader, Button, CheckerStrip, OfflineBanner, LocationPickerModal } from '../../components';
+import { useLocation } from '../../store';
+import { MenuItem } from '../../types';
+import { getCategories, getNewItems, getPopularItems } from '../../api';
+import { getMenuSource } from '../../api/endpoints/menu';
+import { NEWS_ITEMS } from '../../data/news';
+import { mockLocations } from '../../data/mockLocations';
+import { resolveMenuImage, MENU_IMAGE_PLACEHOLDER } from '../../assets/menuImageMap';
+
+const BANNER_IMAGE = require('../../../assets/banners/bigboy-banner.png');
+const BRAND_LOGO = require('../../../assets/brand/bigboy-logo-modern.png');
 
 const HomeScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const { user } = useUser();
-  const { selectedLocation } = useLocation();
-  const { isOffline } = useNetwork();
-  const { itemCount } = useCart();
+  const scrollRef = useRef<ScrollView>(null);
+  const { selectedLocation, locations, selectLocation } = useLocation();
 
-  const [popularItems, setPopularItems] = useState<MenuItem[]>([]);
-  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLocationModalVisible, setLocationModalVisible] = useState(false);
+  const [newItems, setNewItems] = useState<MenuItem[]>([]);
+  const [featuredItems, setFeaturedItems] = useState<MenuItem[]>([]);
+  const [menuSource, setMenuSource] = useState<'api' | 'mock'>('api');
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
+
+  const availableLocations = useMemo(
+    () => (locations.length ? locations : mockLocations),
+    [locations]
+  );
+
+  const locationId = selectedLocation?.id ?? '';
 
   const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
     try {
-      const [items, orders] = await Promise.all([
-        getPopularItems(),
-        getRecentOrders(),
+      const [items, popular] = await Promise.all([
+        getNewItems(locationId),
+        getPopularItems(locationId),
       ]);
-      setPopularItems(items.slice(0, 6));
-      setRecentOrders(orders.slice(0, 3));
+      setNewItems(items.slice(0, 6));
+      setFeaturedItems((popular.length ? popular : items).slice(0, 6));
+      setMenuSource(getMenuSource());
     } catch (error) {
-      console.error('Failed to load home data:', error);
+      console.error('[Home] Failed to load new items:', error);
+      setErrorMessage('Failed to load menu items.');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [locationId]);
 
   useEffect(() => {
     fetchData();
@@ -55,471 +76,396 @@ const HomeScreen: React.FC = () => {
     setIsRefreshing(false);
   }, [fetchData]);
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
+  const handleOrderNow = () => {
+    navigation.navigate('MenuTab', { screen: 'Menu', params: { initialCategoryId: 'all' }, merge: true });
   };
 
-  const formatPrice = (price: number) => `$${price.toFixed(2)}`;
+  const handleNewsPress = (newsId: string) => {
+    navigation.navigate('NewsDetail', { newsId });
+  };
+
+  const handlePromoOrderNow = async (categoryHint?: string) => {
+    if (!categoryHint) {
+      navigation.navigate('MenuTab', { screen: 'Menu', params: { initialCategoryId: 'all' }, merge: true });
+      return;
+    }
+
+    try {
+      const categories = await getCategories(locationId);
+      const normalized = categoryHint.toLowerCase();
+      const match = categories.find((category) => {
+        const name = category.name?.toLowerCase() ?? '';
+        const slug = category.slug?.toLowerCase() ?? '';
+        return name.includes(normalized) || slug.includes(normalized);
+      });
+
+      navigation.navigate('MenuTab', {
+        screen: 'Menu',
+        params: { initialCategoryId: match?.id ?? 'all' },
+        merge: true,
+      });
+    } catch {
+      navigation.navigate('MenuTab', { screen: 'Menu', params: { initialCategoryId: 'all' }, merge: true });
+    }
+  };
+
+  const handleSelectLocation = async (location: typeof availableLocations[number]) => {
+    await selectLocation(location);
+    setLocationModalVisible(false);
+  };
+
+  const handleLogoPress = () => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+  };
+
+  const normalizePrice = (price: number) => {
+    if (!Number.isFinite(price)) return 0;
+    if (price >= 1000) return price / 100;
+    if (price >= 100 && Number.isInteger(price)) return price / 100;
+    return price;
+  };
+  const formatPrice = (price: number) => `$${normalizePrice(price).toFixed(2)}`;
+
+  const LocationPill = (
+    <TouchableOpacity
+      style={styles.locationPill}
+      onPress={() => setLocationModalVisible(true)}
+      accessibilityRole="button"
+      accessibilityLabel="Select location"
+    >
+      <Ionicons name="location" size={14} color={colors.primary.main} />
+      <Text style={styles.locationPillText} numberOfLines={1}>
+        {selectedLocation?.name || 'Select location'}
+      </Text>
+      <Ionicons name="chevron-down" size={14} color={colors.text.tertiary} />
+    </TouchableOpacity>
+  );
+
+  const renderNewsCard = ({ item }: { item: typeof NEWS_ITEMS[number] }) => (
+    <TouchableOpacity
+      style={styles.newsCard}
+      onPress={() => handleNewsPress(item.id)}
+      activeOpacity={0.9}
+    >
+      <ImageBackground source={item.image} style={styles.newsImage} imageStyle={styles.newsImageStyle}>
+        <View style={styles.newsOverlay}>
+          <Text style={styles.newsBadge}>LIMITED TIME</Text>
+          <Text style={styles.newsTitle}>{item.title}</Text>
+          <Text style={styles.newsSubtitle}>{item.subtitle}</Text>
+          <TouchableOpacity
+            style={styles.newsCta}
+            onPress={() => handlePromoOrderNow(item.categoryHint)}
+            accessibilityRole="button"
+            accessibilityLabel={`Order now for ${item.title}`}
+          >
+            <Text style={styles.newsCtaText}>Order Now</Text>
+            <Ionicons name="arrow-forward" size={14} color={colors.white} />
+          </TouchableOpacity>
+        </View>
+      </ImageBackground>
+    </TouchableOpacity>
+  );
+
+  const handleOpenMenuItem = (itemId: string) => {
+    navigation.navigate('MenuTab', { screen: 'Menu', params: { initialCategoryId: 'all' }, merge: true });
+    requestAnimationFrame(() => {
+      navigation.navigate('MenuTab', { screen: 'MenuItemDetail', params: { itemId } });
+    });
+  };
+
+  const renderNewItemCard = (item: MenuItem) => {
+    const resolved = resolveMenuImage(item);
+    const imageSource = failedImages[item.id] ? MENU_IMAGE_PLACEHOLDER : resolved.source;
+    const isPlaceholder = failedImages[item.id] || imageSource === MENU_IMAGE_PLACEHOLDER;
+    return (
+      <TouchableOpacity
+        style={styles.newItemCard}
+        onPress={() => handleOpenMenuItem(item.id)}
+      >
+        <View style={styles.newItemImageWrap}>
+          <Image
+            source={imageSource}
+            style={styles.newItemImage}
+            resizeMode={isPlaceholder ? 'contain' : 'cover'}
+            onError={() => setFailedImages((prev) => ({ ...prev, [item.id]: true }))}
+          />
+        </View>
+        <View style={styles.newItemInfo}>
+          <Text style={styles.newItemName} numberOfLines={2}>{item.name}</Text>
+          <Text style={styles.newItemPrice}>{formatPrice(item.price)}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const placeholderItems = [
+    { key: 'ph-1', title: 'Classic Big Boy', price: '$9.99' },
+    { key: 'ph-2', title: 'Strawberry Shake', price: '$5.49' },
+    { key: 'ph-3', title: 'Fish & Chips', price: '$11.99' },
+    { key: 'ph-4', title: 'Shrimp Basket', price: '$10.49' },
+    { key: 'ph-5', title: 'Seafood Fest', price: '$12.99' },
+    { key: 'ph-6', title: 'Burger Combo', price: '$10.99' },
+  ];
+
+  const placeholderCards = placeholderItems.map((item) => (
+    <View key={item.key} style={styles.newItemCard}>
+      <View style={styles.newItemImageWrap}>
+        <Image source={BRAND_LOGO} style={styles.newItemImage} resizeMode="contain" />
+      </View>
+      <View style={styles.newItemInfo}>
+        <Text style={styles.newItemName}>{item.title}</Text>
+        <Text style={styles.newItemPrice}>{item.price}</Text>
+      </View>
+    </View>
+  ));
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <OfflineBanner />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.greeting}>{getGreeting()},</Text>
-          <Text style={styles.userName}>{user?.firstName || 'Guest'}!</Text>
-        </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity
-            style={styles.cartButton}
-            onPress={() => navigation.navigate('MenuTab', { screen: 'Cart' })}
-            accessibilityLabel={`Cart with ${itemCount} items`}
-          >
-            <Ionicons name="cart-outline" size={24} color={colors.text.primary} />
-            {itemCount > 0 && (
-              <View style={styles.cartBadge}>
-                <Text style={styles.cartBadgeText}>{itemCount}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
-      </View>
+      <BrandedHeader
+        onLogoPress={handleLogoPress}
+        centerSlot={LocationPill}
+      />
+      <CheckerStrip />
+
+      <LocationPickerModal
+        visible={isLocationModalVisible}
+        locations={availableLocations}
+        selectedId={selectedLocation?.id}
+        onClose={() => setLocationModalVisible(false)}
+        onSelect={handleSelectLocation}
+      />
 
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        ref={scrollRef}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
       >
-        {/* Location Selector */}
-        <TouchableOpacity
-          style={styles.locationCard}
-          onPress={() => navigation.navigate('MoreTab', { screen: 'Locations' })}
-          accessibilityRole="button"
-          accessibilityLabel="Select pickup location"
-        >
-          <View style={styles.locationLeft}>
-            <Ionicons name="location" size={24} color={colors.primary.main} />
-            <View style={styles.locationInfo}>
-              <Text style={styles.locationLabel}>
-                {selectedLocation ? 'Pickup from' : 'Select a location'}
-              </Text>
-              <Text style={styles.locationName} numberOfLines={1}>
-                {selectedLocation?.name || 'Find a Big Boy near you'}
-              </Text>
-            </View>
+        <ImageBackground source={BANNER_IMAGE} style={styles.banner} imageStyle={styles.bannerImage}>
+          <View style={styles.bannerOverlay}>
+            <Text style={styles.bannerTitle}>Big Boy</Text>
+            <Text style={styles.bannerSubtitle}>Classic diner favorites, ready to order.</Text>
+            <Button title="Order Now" onPress={handleOrderNow} />
           </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.text.tertiary} />
-        </TouchableOpacity>
+        </ImageBackground>
 
-        {/* Loyalty Points */}
-        {user && (
-          <Card style={styles.loyaltyCard} onPress={() => navigation.navigate('RewardsTab')}>
-            <View style={styles.loyaltyContent}>
-              <View style={styles.loyaltyLeft}>
-                <Text style={styles.loyaltyTitle}>Big Boy Rewards</Text>
-                <Text style={styles.loyaltyPoints}>
-                  {user.loyaltyStatus?.currentPoints || 0} points
-                </Text>
-                <Text style={styles.loyaltyTier}>
-                  {user.loyaltyStatus?.tier?.toUpperCase() || 'BRONZE'} Member
-                </Text>
-              </View>
-              <View style={styles.loyaltyRight}>
-                <Ionicons name="star" size={48} color={colors.gold} />
-              </View>
-            </View>
-          </Card>
-        )}
+        <CheckerStrip style={styles.sectionDivider} />
 
-        {/* Quick Actions */}
-        <View style={styles.quickActions}>
-          <TouchableOpacity
-            style={styles.quickAction}
-            onPress={() => navigation.navigate('MenuTab')}
-          >
-            <View style={[styles.quickActionIcon, { backgroundColor: colors.primary.light }]}>
-              <Ionicons name="restaurant" size={24} color={colors.primary.main} />
-            </View>
-            <Text style={styles.quickActionText}>Order Now</Text>
-          </TouchableOpacity>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>News</Text>
+        </View>
 
-          <TouchableOpacity
-            style={styles.quickAction}
-            onPress={() => navigation.navigate('RewardsTab')}
-          >
-            <View style={[styles.quickActionIcon, { backgroundColor: '#FFF5E6' }]}>
-              <Ionicons name="gift" size={24} color={colors.gold} />
-            </View>
-            <Text style={styles.quickActionText}>Rewards</Text>
-          </TouchableOpacity>
+        <FlatList
+          data={NEWS_ITEMS}
+          keyExtractor={(item) => item.id ?? item.title}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          renderItem={renderNewsCard}
+        />
 
-          <TouchableOpacity
-            style={styles.quickAction}
-            onPress={() => navigation.navigate('AccountTab', { screen: 'OrderHistory' })}
-          >
-            <View style={[styles.quickActionIcon, { backgroundColor: '#E8F5E9' }]}>
-              <Ionicons name="receipt" size={24} color={colors.success} />
-            </View>
-            <Text style={styles.quickActionText}>Orders</Text>
-          </TouchableOpacity>
+        <CheckerStrip style={styles.sectionDivider} />
 
-          <TouchableOpacity
-            style={styles.quickAction}
-            onPress={() => navigation.navigate('MoreTab', { screen: 'Locations' })}
-          >
-            <View style={[styles.quickActionIcon, { backgroundColor: '#E3F2FD' }]}>
-              <Ionicons name="location" size={24} color={colors.info} />
-            </View>
-            <Text style={styles.quickActionText}>Locations</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>New Items</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('MenuTab')}>
+            <Text style={styles.sectionAction}>See Menu</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Popular Items */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Popular Items</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('MenuTab')}>
-              <Text style={styles.seeAllText}>See Menu</Text>
-            </TouchableOpacity>
+        {menuSource === 'mock' && (
+          <View style={styles.mockBanner}>
+            <Ionicons name="cloud-offline-outline" size={16} color={colors.text.secondary} />
+            <Text style={styles.mockBannerText}>Offline mode (menu from mock)</Text>
           </View>
+        )}
 
-          <ScrollView
+        {errorMessage ? (
+          <View style={styles.emptyState}>
+            <Ionicons name="alert-circle-outline" size={32} color={colors.text.tertiary} />
+            <Text style={styles.emptyText}>{errorMessage}</Text>
+          </View>
+        ) : isLoading && newItems.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Ionicons name="restaurant-outline" size={32} color={colors.text.tertiary} />
+            <Text style={styles.emptyText}>Loading menu...</Text>
+          </View>
+        ) : (
+          <View>
+            {newItems.length > 0 ? (
+              <FlatList
+                data={newItems}
+                keyExtractor={(item) => item.id}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.newItemsRow}
+                renderItem={({ item }) => renderNewItemCard(item)}
+              />
+            ) : (
+              <>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.newItemsRow}>
+                  {placeholderCards}
+                </ScrollView>
+                <TouchableOpacity style={styles.tryAgainButton} onPress={fetchData}>
+                  <Text style={styles.tryAgainText}>Try again</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        )}
+
+        <CheckerStrip style={styles.sectionDivider} />
+
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Featured Items</Text>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('MenuTab', { screen: 'Menu', params: { initialCategoryId: 'all' }, merge: true })
+            }
+          >
+            <Text style={styles.sectionAction}>See Menu</Text>
+          </TouchableOpacity>
+        </View>
+
+        {featuredItems.length > 0 ? (
+          <FlatList
+            data={featuredItems}
+            keyExtractor={(item) => item.id}
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.popularScroll}
-          >
-            {popularItems.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                style={styles.popularCard}
-                onPress={() => 
-                  navigation.navigate('MenuTab', {
-                    screen: 'MenuItemDetail',
-                    params: { itemId: item.id },
-                  })
-                }
-              >
-                <View style={styles.popularImagePlaceholder}>
-                  <Ionicons name="fast-food" size={32} color={colors.text.tertiary} />
-                </View>
-                <View style={styles.popularInfo}>
-                  <Text style={styles.popularName} numberOfLines={2}>
-                    {item.name}
-                  </Text>
-                  <Text style={styles.popularPrice}>{formatPrice(item.price)}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Recent Orders */}
-        {recentOrders.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Recent Orders</Text>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('AccountTab', { screen: 'OrderHistory' })}
-              >
-                <Text style={styles.seeAllText}>See All</Text>
-              </TouchableOpacity>
-            </View>
-
-            {recentOrders.map((order) => (
-              <Card
-                key={order.id}
-                style={styles.orderCard}
-                onPress={() =>
-                  navigation.navigate('HomeTab', {
-                    screen: 'OrderDetail',
-                    params: { orderId: order.id },
-                  })
-                }
-              >
-                <View style={styles.orderHeader}>
-                  <View>
-                    <Text style={styles.orderNumber}>#{order.orderNumber}</Text>
-                    <Text style={styles.orderDate}>
-                      {new Date(order.createdAt).toLocaleDateString()}
-                    </Text>
-                  </View>
-                  <View style={[styles.orderStatus, styles[`status_${order.status}`]]}>
-                    <Text style={styles.orderStatusText}>{order.status}</Text>
-                  </View>
-                </View>
-                <View style={styles.orderItems}>
-                  <Text style={styles.orderItemsText} numberOfLines={1}>
-                    {order.items.map((i) => i.name).join(', ')}
-                  </Text>
-                </View>
-                <View style={styles.orderFooter}>
-                  <Text style={styles.orderTotal}>{formatPrice(order.total)}</Text>
-                  <TouchableOpacity style={styles.reorderButton}>
-                    <Text style={styles.reorderText}>Reorder</Text>
-                  </TouchableOpacity>
-                </View>
-              </Card>
-            ))}
-          </View>
+            contentContainerStyle={styles.newItemsRow}
+            renderItem={({ item }) => renderNewItemCard(item)}
+          />
+        ) : (
+          <>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.newItemsRow}>
+              {placeholderCards}
+            </ScrollView>
+            <TouchableOpacity style={styles.tryAgainButton} onPress={fetchData}>
+              <Text style={styles.tryAgainText}>Try again</Text>
+            </TouchableOpacity>
+          </>
         )}
-
-        {/* Bottom Spacing */}
-        <View style={{ height: spacing['3xl'] }} />
       </ScrollView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1, backgroundColor: colors.background },
+  content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing['4xl'] },
+  banner: { height: 200, borderRadius: borderRadius.lg, overflow: 'hidden' },
+  bannerImage: { borderRadius: borderRadius.lg },
+  bannerOverlay: {
     flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  headerLeft: {},
-  headerRight: {},
-  greeting: {
-    ...typography.bodyMedium,
-    color: colors.text.secondary,
-  },
-  userName: {
-    ...typography.headlineSmall,
-    color: colors.text.primary,
-  },
-  cartButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...shadows.sm,
-  },
-  cartBadge: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    backgroundColor: colors.primary.main,
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cartBadgeText: {
-    ...typography.labelSmall,
-    color: colors.white,
-    fontWeight: '700',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
+    justifyContent: 'flex-end',
     padding: spacing.lg,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    gap: spacing.sm,
   },
-  locationCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.surface,
-    padding: spacing.lg,
-    borderRadius: borderRadius.lg,
-    marginBottom: spacing.lg,
-    ...shadows.sm,
-  },
-  locationLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  locationInfo: {
-    marginLeft: spacing.md,
-    flex: 1,
-  },
-  locationLabel: {
-    ...typography.labelSmall,
-    color: colors.text.tertiary,
-  },
-  locationName: {
-    ...typography.titleMedium,
-    color: colors.text.primary,
-  },
-  loyaltyCard: {
-    backgroundColor: colors.secondary.main,
-    marginBottom: spacing.lg,
-  },
-  loyaltyContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  loyaltyLeft: {},
-  loyaltyRight: {},
-  loyaltyTitle: {
-    ...typography.labelMedium,
-    color: colors.white,
-    opacity: 0.8,
-  },
-  loyaltyPoints: {
-    ...typography.headlineMedium,
-    color: colors.white,
-  },
-  loyaltyTier: {
-    ...typography.labelMedium,
-    color: colors.gold,
-  },
-  quickActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.xl,
-  },
-  quickAction: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  quickActionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  quickActionText: {
-    ...typography.labelSmall,
-    color: colors.text.secondary,
-  },
-  section: {
-    marginBottom: spacing.xl,
-  },
+  bannerTitle: { ...typography.headlineSmall, color: colors.white },
+  bannerSubtitle: { ...typography.bodyMedium, color: colors.white },
+  sectionDivider: { marginTop: spacing.sm },
   sectionHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    justifyContent: 'space-between',
   },
-  sectionTitle: {
-    ...typography.titleLarge,
-    color: colors.text.primary,
+  sectionTitle: { ...typography.titleLarge, color: colors.text.primary },
+  sectionAction: { ...typography.labelLarge, color: colors.primary.main },
+  newsCard: { width: 320, marginRight: spacing.md },
+  newsImage: { height: 180, borderRadius: borderRadius.lg, overflow: 'hidden' },
+  newsImageStyle: { borderRadius: borderRadius.lg },
+  newsOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    padding: spacing.md,
+    backgroundColor: 'rgba(0,0,0,0.35)',
   },
-  seeAllText: {
-    ...typography.labelMedium,
-    color: colors.primary.main,
+  newsBadge: {
+    ...typography.labelSmall,
+    color: colors.white,
+    backgroundColor: colors.primary.main,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: borderRadius.full,
+    alignSelf: 'flex-start',
+    marginBottom: spacing.xs,
   },
-  popularScroll: {
-    paddingRight: spacing.lg,
+  newsTitle: { ...typography.titleMedium, color: colors.white },
+  newsSubtitle: { ...typography.bodySmall, color: colors.white },
+  newsCta: {
+    marginTop: spacing.sm,
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.primary.main,
   },
-  popularCard: {
-    width: 140,
+  newsCtaText: { ...typography.labelSmall, color: colors.white, fontWeight: '700' },
+  newItemsRow: { gap: spacing.md, paddingRight: spacing.lg },
+  newItemCard: {
+    width: 160,
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
-    marginRight: spacing.md,
     overflow: 'hidden',
     ...shadows.sm,
   },
-  popularImagePlaceholder: {
-    height: 100,
-    backgroundColor: colors.warmGray,
+  newItemImageWrap: {
+    height: 110,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.light,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
   },
-  popularInfo: {
-    padding: spacing.md,
-  },
-  popularName: {
-    ...typography.titleSmall,
-    color: colors.text.primary,
-    marginBottom: spacing.xs,
-  },
-  popularPrice: {
-    ...typography.labelLarge,
-    color: colors.primary.main,
-    fontWeight: '700',
-  },
-  orderCard: {
-    marginBottom: spacing.md,
-  },
-  orderHeader: {
+  newItemImage: { width: '100%', height: 110 },
+  newItemInfo: { padding: spacing.md },
+  newItemName: { ...typography.titleSmall, color: colors.text.primary, marginBottom: spacing.xs },
+  newItemPrice: { ...typography.labelLarge, color: colors.primary.main, fontWeight: '700' },
+  emptyState: { alignItems: 'center', paddingVertical: spacing.lg, gap: spacing.sm },
+  emptyText: { ...typography.bodyMedium, color: colors.text.secondary },
+  mockBanner: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.sm,
-  },
-  orderNumber: {
-    ...typography.titleMedium,
-    color: colors.text.primary,
-  },
-  orderDate: {
-    ...typography.labelSmall,
-    color: colors.text.tertiary,
-  },
-  orderStatus: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-  },
-  status_pending: {
-    backgroundColor: colors.warning + '20',
-  },
-  status_confirmed: {
-    backgroundColor: colors.info + '20',
-  },
-  status_preparing: {
-    backgroundColor: colors.info + '20',
-  },
-  status_ready: {
-    backgroundColor: colors.success + '20',
-  },
-  status_completed: {
-    backgroundColor: colors.success + '20',
-  },
-  status_cancelled: {
-    backgroundColor: colors.error + '20',
-  },
-  orderStatusText: {
-    ...typography.labelSmall,
-    color: colors.text.secondary,
-    textTransform: 'capitalize',
-  },
-  orderItems: {
-    marginBottom: spacing.md,
-  },
-  orderItemsText: {
-    ...typography.bodyMedium,
-    color: colors.text.secondary,
-  },
-  orderFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  orderTotal: {
-    ...typography.titleMedium,
-    color: colors.text.primary,
-  },
-  reorderButton: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.primary.light,
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    padding: spacing.sm,
     borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border.light,
   },
-  reorderText: {
-    ...typography.labelMedium,
-    color: colors.primary.main,
+  mockBannerText: { ...typography.bodySmall, color: colors.text.secondary },
+  locationPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    maxWidth: 170,
+  },
+  locationPillText: { ...typography.labelMedium, color: colors.text.primary, maxWidth: 120 },
+  tryAgainButton: {
+    alignSelf: 'flex-start',
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border.main,
+  },
+  tryAgainText: {
+    ...typography.labelSmall,
+    color: colors.text.primary,
     fontWeight: '600',
   },
 });

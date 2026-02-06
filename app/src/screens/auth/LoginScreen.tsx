@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as WebBrowser from 'expo-web-browser';
 import {
   View,
   Text,
@@ -17,11 +18,9 @@ import { colors, typography, spacing, borderRadius } from '../../theme';
 import { useUser, useToast } from '../../store';
 import { Button } from '../../components/Button';
 import { useGoogleAuth } from '../../hooks';
+import { AuthStackParamList } from '../../navigation/types';
 
-type AuthStackParamList = {
-  Login: undefined;
-  Register: undefined;
-};
+WebBrowser.maybeCompleteAuthSession();
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
@@ -34,7 +33,15 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
   const { login, googleLoginWithAuthCode } = useUser();
   const { showToast } = useToast();
-  const { promptAsync, isReady: isGoogleReady, redirectUri } = useGoogleAuth();
+  const {
+    promptAsync,
+    isReady: isGoogleReady,
+    isConfigured: isGoogleConfigured,
+    redirectUri,
+    androidClientId,
+    webClientId,
+    clientId,
+  } = useGoogleAuth();
 
   // Log Google auth redirect URI on mount for debugging
   useEffect(() => {
@@ -43,6 +50,11 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   }, [redirectUri, isGoogleReady]);
 
   const handleGoogleSignIn = async () => {
+    if (!isGoogleConfigured) {
+      showToast('Google sign-in not configured. Check .env and restart Expo.', 'error');
+      return;
+    }
+
     if (!isGoogleReady) {
       console.log('[LoginScreen] Google Auth not ready');
       showToast('Google Sign-In not ready. Please wait...', 'error');
@@ -51,6 +63,13 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
     setIsGoogleLoading(true);
     console.log('[LoginScreen] Starting Google Sign-In...');
+    if (__DEV__) {
+      console.log('[LoginScreen] Google Auth config:', {
+        redirectUri,
+        requestReady: isGoogleReady,
+        clientIdPrefix: clientId ? clientId.slice(0, 12) : 'missing',
+      });
+    }
 
     try {
       const result = await promptAsync();
@@ -62,19 +81,20 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
       });
 
       if (result.type === 'success' && result.code && result.codeVerifier && result.redirectUri) {
-        const success = await googleLoginWithAuthCode({
+        const { success, error } = await googleLoginWithAuthCode({
           code: result.code,
           codeVerifier: result.codeVerifier,
           redirectUri: result.redirectUri,
+          clientId: result.clientId ?? clientId,
         });
         if (success) {
           showToast('Welcome!', 'success');
         } else {
-          showToast('Failed to sign in with Google', 'error');
+          showToast(error || 'Failed to sign in with Google', 'error');
         }
       } else if (result.type === 'cancel') {
         console.log('[LoginScreen] User cancelled Google Sign-In');
-        // User cancelled, no need to show error
+        showToast('Google sign-in closed. Try again.', 'info');
       } else if (result.type === 'error') {
         console.log('[LoginScreen] Google Sign-In error:', result.error);
         showToast(result.error || 'Google Sign-In failed', 'error');
@@ -185,6 +205,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
             <TouchableOpacity 
               style={styles.forgotPassword}
+              onPress={() => navigation.navigate('ForgotPassword')}
               accessibilityRole="button"
               accessibilityLabel="Forgot password"
             >
@@ -209,10 +230,10 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
             <TouchableOpacity
               style={[
                 styles.googleButton,
-                (!isGoogleReady || isGoogleLoading || isLoading) && styles.googleButtonDisabled,
+                (!isGoogleReady || !isGoogleConfigured || isGoogleLoading || isLoading) && styles.googleButtonDisabled,
               ]}
               onPress={handleGoogleSignIn}
-              disabled={!isGoogleReady || isGoogleLoading || isLoading}
+              disabled={isGoogleLoading || isLoading}
               accessibilityRole="button"
               accessibilityLabel="Continue with Google"
             >
@@ -225,6 +246,13 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
                 </>
               )}
             </TouchableOpacity>
+
+            <Text style={styles.googleStatusText}>
+              Google: androidClientId={androidClientId ? 'YES' : 'NO'}, webClientId={webClientId ? 'YES' : 'NO'}
+            </Text>
+            <Text style={styles.googleStatusText}>
+              Redirect: {redirectUri || 'missing'} • Ready: {isGoogleReady ? 'YES' : 'NO'}
+            </Text>
           </View>
 
           {/* Footer */}
@@ -240,10 +268,6 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
             </TouchableOpacity>
           </View>
 
-          {/* Demo credentials hint */}
-          <View style={styles.demoHint}>
-            <Text style={styles.demoText}>Demo: john@example.com / password123</Text>
-          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -364,6 +388,12 @@ const styles = StyleSheet.create({
     ...typography.labelLarge,
     color: colors.text.primary,
   },
+  googleStatusText: {
+    ...typography.labelSmall,
+    color: colors.text.tertiary,
+    textAlign: 'center',
+    marginTop: spacing.sm,
+  },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -376,17 +406,6 @@ const styles = StyleSheet.create({
   },
   linkText: {
     ...typography.labelLarge,
-    color: colors.primary.main,
-  },
-  demoHint: {
-    marginTop: spacing['2xl'],
-    padding: spacing.md,
-    backgroundColor: colors.primary.light,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-  },
-  demoText: {
-    ...typography.labelSmall,
     color: colors.primary.main,
   },
 });

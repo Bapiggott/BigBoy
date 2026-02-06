@@ -8,6 +8,7 @@ import MenuItemDetailScreen from '../screens/menu/MenuItemDetailScreen';
 import CartScreen from '../screens/menu/CartScreen';
 import CheckoutScreen from '../screens/menu/CheckoutScreen';
 import OrderConfirmationScreen from '../screens/menu/OrderConfirmationScreen';
+import FavoritesScreen from '../screens/menu/FavoritesScreen';
 
 const Stack = createNativeStackNavigator<MenuStackParamList>();
 
@@ -18,7 +19,8 @@ const MenuStack: React.FC = () => {
         headerStyle: {
           backgroundColor: colors.background,
         },
-        headerTintColor: colors.text.primary,
+        headerTintColor: '#000',
+        headerBackTitleVisible: false,
         headerTitleStyle: {
           fontWeight: '600',
         },
@@ -28,17 +30,17 @@ const MenuStack: React.FC = () => {
       <Stack.Screen
         name="Menu"
         component={MenuScreen}
-        options={{ title: 'Menu' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="MenuItemDetail"
         component={MenuItemDetailScreen}
-        options={{ title: '' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Cart"
         component={CartScreen}
-        options={{ title: 'Your Cart' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Checkout"
@@ -52,6 +54,11 @@ const MenuStack: React.FC = () => {
           headerShown: false,
           gestureEnabled: false, // Prevent back gesture after order
         }}
+      />
+      <Stack.Screen
+        name="Favorites"
+        component={FavoritesScreen}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

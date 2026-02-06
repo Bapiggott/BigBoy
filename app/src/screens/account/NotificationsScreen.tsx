@@ -7,10 +7,10 @@ import {
   Switch,
   RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../../theme';
-import { Card } from '../../components/Card';
-import { OfflineBanner } from '../../components/OfflineBanner';
+import { BrandedHeader, Card, OfflineBanner } from '../../components';
 import { useNetwork } from '../../store/NetworkContext';
 import { useToast } from '../../store/ToastContext';
 
@@ -155,7 +155,8 @@ const NotificationsScreen: React.FC = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <BrandedHeader title="Notifications" showBack />
       <OfflineBanner />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -235,7 +236,7 @@ const NotificationsScreen: React.FC = () => {
           </Text>
         </Card>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

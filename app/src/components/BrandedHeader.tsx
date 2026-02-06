@@ -1,7 +1,21 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, ImageSourcePropType, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { brandTheme, colors, spacing, typography } from '../theme';
+import { useCart } from '../store';
+
+const safeBrandColors = brandTheme?.colors ?? {
+  primary: colors.primary.main,
+  secondary: colors.secondary.main,
+  cream: colors.background,
+  dark: colors.text.primary,
+  card: colors.surface,
+  chipBg: colors.primary.light,
+  chipText: colors.primary.main,
+};
+
+const safeBrandSpacing = brandTheme?.spacing ?? spacing;
 
 type BrandedHeaderProps = {
   title?: string;
@@ -9,6 +23,11 @@ type BrandedHeaderProps = {
   promoLabel?: string;
   rightSlot?: React.ReactNode;
   onLogoPress?: () => void;
+  showBack?: boolean;
+  onBackPress?: () => void;
+  showActions?: boolean;
+  showHeart?: boolean;
+  showCart?: boolean;
 };
 
 const logoSource: ImageSourcePropType = require('../../assets/brand/bigboy-logo-modern.png');
@@ -19,9 +38,25 @@ export const BrandedHeader: React.FC<BrandedHeaderProps> = ({
   promoLabel,
   rightSlot,
   onLogoPress,
+  showBack = false,
+  onBackPress,
+  showActions = true,
+  showHeart = true,
+  showCart = true,
 }) => {
   const [logoError, setLogoError] = useState(false);
   const navigation = useNavigation<any>();
+  const { itemCount } = useCart();
+
+  const handleBackPress = () => {
+    if (onBackPress) {
+      onBackPress();
+      return;
+    }
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    }
+  };
 
   const handleLogoPress = () => {
     if (onLogoPress) {
@@ -31,20 +66,41 @@ export const BrandedHeader: React.FC<BrandedHeaderProps> = ({
     navigation.navigate('HomeTab', { screen: 'Home' });
   };
 
+  const handleFavoritesPress = () => {
+    navigation.navigate('MenuTab', { screen: 'Favorites' });
+  };
+
+  const handleCartPress = () => {
+    navigation.navigate('MenuTab', { screen: 'Cart' });
+  };
+
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.left}
-        onPress={handleLogoPress}
-        accessibilityRole="button"
-        accessibilityLabel="Go to Home"
-      >
-        {logoError ? (
-          <Text style={styles.logoFallback}>BIG BOY</Text>
+      <View style={styles.left}>
+        {showBack ? (
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={handleBackPress}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="chevron-back" size={22} color="#000" />
+          </TouchableOpacity>
         ) : (
-          <Image source={logoSource} style={styles.logo} resizeMode="contain" onError={() => setLogoError(true)} />
+          <TouchableOpacity
+            onPress={handleLogoPress}
+            accessibilityRole="button"
+            accessibilityLabel="Go to Home"
+          >
+            {logoError ? (
+              <Text style={styles.logoFallback}>BIG BOY</Text>
+            ) : (
+              <Image source={logoSource} style={styles.logo} resizeMode="contain" onError={() => setLogoError(true)} />
+            )}
+          </TouchableOpacity>
         )}
-      </TouchableOpacity>
+      </View>
 
       <View style={styles.center}>
         {centerSlot ? centerSlot : title ? <Text style={styles.title}>{title}</Text> : null}
@@ -57,6 +113,37 @@ export const BrandedHeader: React.FC<BrandedHeaderProps> = ({
           </View>
         ) : null}
         {rightSlot}
+        {showActions && (
+          <View style={styles.actionRow}>
+            {showHeart && (
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={handleFavoritesPress}
+                accessibilityRole="button"
+                accessibilityLabel="Favorites"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="heart-outline" size={20} color={colors.text.primary} />
+              </TouchableOpacity>
+            )}
+            {showCart && (
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={handleCartPress}
+                accessibilityRole="button"
+                accessibilityLabel="Cart"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="cart-outline" size={20} color={colors.text.primary} />
+                {itemCount > 0 && (
+                  <View style={styles.cartBadge}>
+                    <Text style={styles.cartBadgeText}>{itemCount}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
       </View>
     </View>
   );
@@ -68,7 +155,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    backgroundColor: brandTheme.colors.cream,
+    backgroundColor: safeBrandColors.cream,
     borderBottomWidth: 1,
     borderBottomColor: colors.border.light,
   },
@@ -76,6 +163,18 @@ const styles = StyleSheet.create({
     width: 76,
     alignItems: 'flex-start',
     justifyContent: 'center',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backFallback: {
+    ...typography.labelMedium,
+    color: safeBrandColors.dark,
+    fontWeight: '700',
   },
   center: {
     flex: 1,
@@ -87,7 +186,36 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: brandTheme.spacing.sm,
+    gap: safeBrandSpacing.sm,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: safeBrandSpacing.sm,
+  },
+  actionButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: colors.primary.main,
+    borderRadius: 9,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  cartBadgeText: {
+    ...typography.labelSmall,
+    color: colors.white,
+    fontWeight: '700',
   },
   logo: {
     width: 62,
@@ -95,23 +223,23 @@ const styles = StyleSheet.create({
   },
   logoFallback: {
     ...typography.labelMedium,
-    color: brandTheme.colors.primary,
+    color: safeBrandColors.primary,
     fontWeight: '800',
   },
   title: {
     ...typography.titleLarge,
-    color: brandTheme.colors.dark,
+    color: safeBrandColors.dark,
     fontWeight: '800',
   },
   promoChip: {
-    backgroundColor: brandTheme.colors.chipBg,
+    backgroundColor: safeBrandColors.chipBg,
     borderRadius: 999,
-    paddingHorizontal: brandTheme.spacing.sm,
-    paddingVertical: brandTheme.spacing.xs,
+    paddingHorizontal: safeBrandSpacing.sm,
+    paddingVertical: safeBrandSpacing.xs,
   },
   promoText: {
     ...typography.labelSmall,
-    color: brandTheme.colors.chipText,
+    color: safeBrandColors.chipText,
     fontWeight: '700',
   },
 });

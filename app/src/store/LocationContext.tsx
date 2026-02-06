@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect, Rea
 import { Location } from '../types';
 import { appStorage } from '../utils/storage';
 import * as locationsApi from '../api/endpoints/locations';
+import { mockLocations } from '../data/mockLocations';
 
 interface LocationContextValue {
   selectedLocation: Location | null;
@@ -29,7 +30,8 @@ export function LocationProvider({ children }: LocationProviderProps) {
     const initialize = async () => {
       try {
         // Load all locations
-        const allLocations = await locationsApi.getLocations();
+        const apiLocations = await locationsApi.getLocations();
+        const allLocations = apiLocations.length > 0 ? apiLocations : mockLocations;
         setLocations(allLocations);
 
         // Check for saved selected location
@@ -40,8 +42,23 @@ export function LocationProvider({ children }: LocationProviderProps) {
             setSelectedLocation(savedLocation);
           }
         }
+        if (!savedLocationId) {
+          const defaultLocation = allLocations.find(l => l.status === 'open') ?? allLocations[0];
+          if (defaultLocation) {
+            setSelectedLocation(defaultLocation);
+            await appStorage.setSelectedLocation(defaultLocation.id);
+          }
+        }
       } catch (error) {
         console.error('Failed to load locations:', error);
+        setLocations(mockLocations);
+        if (!selectedLocation) {
+          const fallbackLocation = mockLocations.find(l => l.status === 'open') ?? mockLocations[0];
+          if (fallbackLocation) {
+            setSelectedLocation(fallbackLocation);
+            await appStorage.setSelectedLocation(fallbackLocation.id);
+          }
+        }
       } finally {
         setIsLoading(false);
       }

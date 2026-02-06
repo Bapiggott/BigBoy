@@ -4,11 +4,9 @@ import { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/n
 
 // Root tab navigator param list
 export type RootTabParamList = {
-  NewsTab: NavigatorScreenParams<NewsStackParamList>;
   HomeTab: NavigatorScreenParams<HomeStackParamList>;
   MenuTab: NavigatorScreenParams<MenuStackParamList>;
   RewardsTab: NavigatorScreenParams<RewardsStackParamList>;
-  MoreTab: NavigatorScreenParams<MoreStackParamList>;
   AccountTab: NavigatorScreenParams<AccountStackParamList>;
 };
 
@@ -17,9 +15,10 @@ export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
   ForgotPassword: undefined;
+  ResetPassword: undefined;
 };
 
-// News stack
+// News stack (used for promo detail flows, not a bottom tab)
 export type NewsStackParamList = {
   News: undefined;
 };
@@ -33,11 +32,12 @@ export type HomeStackParamList = {
 
 // Menu stack
 export type MenuStackParamList = {
-  Menu: { categoryId?: string };
+  Menu: { categoryId?: string; initialCategoryId?: string };
   MenuItemDetail: { itemId: string };
   Cart: undefined;
   Checkout: undefined;
   OrderConfirmation: { orderId: string };
+  Favorites: undefined;
 };
 
 // Rewards stack
@@ -53,13 +53,12 @@ export type LocationsStackParamList = {
   LocationDetail: { locationId: string };
 };
 
-// More stack
+// More stack (deep links / extra screens)
 export type MoreStackParamList = {
   More: undefined;
   Locations: undefined;
   LocationDetail: { locationId: string };
 };
-
 // Account stack
 export type AccountStackParamList = {
   Account: undefined;
@@ -116,10 +115,6 @@ export type HomeTabProps = CompositeScreenProps<
   NativeStackScreenProps<HomeStackParamList>
 >;
 
-export type NewsTabProps = CompositeScreenProps<
-  BottomTabScreenProps<RootTabParamList, 'NewsTab'>,
-  NativeStackScreenProps<NewsStackParamList>
->;
 
 export type MenuTabProps = CompositeScreenProps<
   BottomTabScreenProps<RootTabParamList, 'MenuTab'>,
@@ -129,11 +124,6 @@ export type MenuTabProps = CompositeScreenProps<
 export type RewardsTabProps = CompositeScreenProps<
   BottomTabScreenProps<RootTabParamList, 'RewardsTab'>,
   NativeStackScreenProps<RewardsStackParamList>
->;
-
-export type MoreTabProps = CompositeScreenProps<
-  BottomTabScreenProps<RootTabParamList, 'MoreTab'>,
-  NativeStackScreenProps<MoreStackParamList>
 >;
 
 export type AccountTabProps = CompositeScreenProps<

@@ -7,11 +7,12 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors, typography, spacing, borderRadius, shadows } from '../../theme';
-import { Card } from '../../components';
+import { colors, typography, spacing, borderRadius } from '../../theme';
+import { BrandedHeader, Card } from '../../components';
 import { useUser, useToast } from '../../store';
 import { AccountStackParamList } from '../../navigation/types';
 
@@ -97,7 +98,9 @@ const AccountScreen: React.FC = () => {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <BrandedHeader title="Profile" />
+      <ScrollView contentContainerStyle={styles.content}>
       {/* User Profile Card */}
       {isAuthenticated && user && (
         <TouchableOpacity
@@ -162,6 +165,11 @@ const AccountScreen: React.FC = () => {
             onPress={() => navigation.navigate('SavedAddresses')}
           />
           <MenuItem
+            icon="heart-outline"
+            label="Favorites"
+            onPress={() => navigation.getParent()?.navigate('MenuTab', { screen: 'Favorites' })}
+          />
+          <MenuItem
             icon="gift-outline"
             label="Gift Cards"
             onPress={() => navigation.navigate('GiftCards')}
@@ -191,8 +199,8 @@ const AccountScreen: React.FC = () => {
             onPress={() => navigation.navigate('Notifications')}
           />
           <MenuItem
-            icon="options-outline"
-            label="Preferences"
+            icon="settings-outline"
+            label="Settings"
             onPress={() => navigation.navigate('Preferences')}
           />
         </Card>
@@ -226,7 +234,8 @@ const AccountScreen: React.FC = () => {
       >
         <Text style={styles.versionText}>Big Boy App v1.0.0</Text>
       </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -333,6 +342,11 @@ const styles = StyleSheet.create({
   menuItemLabel: {
     ...typography.bodyLarge,
     color: colors.text.primary,
+  },
+  menuIconFallback: {
+    ...typography.labelMedium,
+    color: colors.primary.main,
+    fontWeight: '700',
   },
   menuItemRight: {
     flexDirection: 'row',

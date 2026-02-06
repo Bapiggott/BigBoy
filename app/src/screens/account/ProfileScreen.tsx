@@ -8,9 +8,10 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius } from '../../theme';
-import { Card, Button } from '../../components';
+import { BrandedHeader, Card, Button } from '../../components';
 import { useUser, useToast } from '../../store';
 
 const ProfileScreen: React.FC = () => {
@@ -45,7 +46,9 @@ const ProfileScreen: React.FC = () => {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <BrandedHeader title="Profile" showBack />
+      <ScrollView contentContainerStyle={styles.content}>
       {/* Avatar */}
       <View style={styles.avatarSection}>
         <View style={styles.avatar}>
@@ -142,7 +145,8 @@ const ProfileScreen: React.FC = () => {
           Member since {user?.loyaltyStatus?.memberSince ? new Date(user.loyaltyStatus.memberSince).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'N/A'}
         </Text>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

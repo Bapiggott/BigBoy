@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -6,14 +6,19 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
+  StyleProp,
+  ImageStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { colors, typography, spacing, borderRadius, shadows } from '../../theme';
-import { useCart, useLocation, useToast } from '../../store';
+import { useCart, useLocation, useToast, useRewards } from '../../store';
+import { BrandedHeader, CheckerStrip, LocationPickerModal } from '../../components';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
+import { mockLocations } from '../../data/mockLocations';
+import { resolveMenuImage, MENU_IMAGE_PLACEHOLDER } from '../../assets/menuImageMap';
 
 type MenuStackParamList = {
   Menu: { categoryId?: string };
@@ -24,10 +29,38 @@ type MenuStackParamList = {
 
 type Props = NativeStackScreenProps<MenuStackParamList, 'Cart'>;
 
+const CartItemImage: React.FC<{ image?: string; style?: StyleProp<ImageStyle> }> = ({ image, style }) => {
+  const resolved = resolveMenuImage({ imageUrl: image, image });
+  const [failed, setFailed] = useState(false);
+  const source = failed ? MENU_IMAGE_PLACEHOLDER : resolved.source;
+  const isPlaceholder = source === MENU_IMAGE_PLACEHOLDER;
+
+  return (
+    <Image
+      source={source}
+      style={style}
+      resizeMode={isPlaceholder ? 'contain' : 'cover'}
+      onError={() => setFailed(true)}
+    />
+  );
+};
+
 const CartScreen: React.FC<Props> = ({ navigation }) => {
   const { cart, itemCount, removeItem, updateQuantity, getItemTotal, clearCart } = useCart();
-  const { selectedLocation } = useLocation();
+  const { appliedCoupon } = useRewards();
+  const { selectedLocation, locations, selectLocation } = useLocation();
   const { showToast } = useToast();
+  const [isLocationModalVisible, setLocationModalVisible] = useState(false);
+
+  const availableLocations = useMemo(
+    () => (locations.length ? locations : mockLocations),
+    [locations]
+  );
+
+  const handleSelectLocation = async (location: typeof availableLocations[number]) => {
+    await selectLocation(location);
+    setLocationModalVisible(false);
+  };
 
   const formatPrice = (price: number) => `$${price.toFixed(2)}`;
 
@@ -52,9 +85,39 @@ const CartScreen: React.FC<Props> = ({ navigation }) => {
     navigation.navigate('Checkout');
   };
 
-  if (itemCount === 0) {
-    return (
-      <SafeAreaView style={styles.container} edges={['bottom']}>
+  const LocationPill = (
+    <TouchableOpacity
+      style={styles.locationPill}
+      onPress={() => setLocationModalVisible(true)}
+      accessibilityRole="button"
+      accessibilityLabel="Select location"
+    >
+      <Ionicons name="location" size={14} color={colors.primary.main} />
+      <Text style={styles.locationPillText} numberOfLines={1}>
+        {selectedLocation?.name || 'Select location'}
+      </Text>
+      <Ionicons name="chevron-down" size={14} color={colors.text.tertiary} />
+    </TouchableOpacity>
+  );
+
+  const freeItemMatch = appliedCoupon?.discountType === 'FREE_ITEM' ? appliedCoupon.match : undefined;
+  const hasEligibleItem =
+    !!freeItemMatch && cart.items.some((item) => item.name.toLowerCase().includes(freeItemMatch.toLowerCase()));
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <BrandedHeader title="Cart" centerSlot={LocationPill} showBack />
+      <CheckerStrip />
+
+      <LocationPickerModal
+        visible={isLocationModalVisible}
+        locations={availableLocations}
+        selectedId={selectedLocation?.id}
+        onClose={() => setLocationModalVisible(false)}
+        onSelect={handleSelectLocation}
+      />
+
+      {itemCount === 0 ? (
         <View style={styles.emptyState}>
           <View style={styles.emptyIconContainer}>
             <Ionicons name="cart-outline" size={64} color={colors.text.tertiary} />
@@ -69,29 +132,16 @@ const CartScreen: React.FC<Props> = ({ navigation }) => {
             style={styles.browseButton}
           />
         </View>
-      </SafeAreaView>
-    );
-  }
-
-  return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Location */}
-        <TouchableOpacity
-          style={styles.locationCard}
-          onPress={() => navigation.getParent()?.navigate('MoreTab', { screen: 'Locations' })}
-        >
-          <View style={styles.locationLeft}>
-            <Ionicons name="location" size={20} color={colors.primary.main} />
-            <View style={styles.locationInfo}>
-              <Text style={styles.locationLabel}>Pickup from</Text>
-              <Text style={styles.locationName} numberOfLines={1}>
-                {selectedLocation?.name || 'Select a location'}
-              </Text>
-            </View>
+      ) : (
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {appliedCoupon && appliedCoupon.discountType === 'FREE_ITEM' && !hasEligibleItem && (
+          <View style={styles.rewardBanner}>
+            <Ionicons name="alert-circle-outline" size={18} color={colors.primary.main} />
+            <Text style={styles.rewardBannerText}>
+              Add {freeItemMatch} to use this reward.
+            </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.text.tertiary} />
-        </TouchableOpacity>
+        )}
 
         {/* Cart Items */}
         <View style={styles.itemsSection}>
@@ -103,11 +153,17 @@ const CartScreen: React.FC<Props> = ({ navigation }) => {
           </View>
 
           {cart.items.map((item) => (
-            <Card key={item.id} style={styles.cartItem} variant="outlined" padding="none">
+            <Card
+              key={item.id}
+              style={styles.cartItem}
+              variant="outlined"
+              padding="none"
+              onPress={() => navigation.navigate('MenuItemDetail', { itemId: item.menuItemId })}
+            >
               <View style={styles.cartItemContent}>
                 {/* Image placeholder */}
                 <View style={styles.itemImagePlaceholder}>
-                  <Ionicons name="fast-food" size={28} color={colors.text.tertiary} />
+                  <CartItemImage image={item.image} style={styles.itemImage} />
                 </View>
 
                 {/* Item Details */}
@@ -170,6 +226,13 @@ const CartScreen: React.FC<Props> = ({ navigation }) => {
             <Text style={styles.summaryLabel}>Subtotal</Text>
             <Text style={styles.summaryValue}>{formatPrice(cart.subtotal)}</Text>
           </View>
+
+          {cart.discount > 0 && (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Discount</Text>
+              <Text style={styles.summaryValue}>- {formatPrice(cart.discount)}</Text>
+            </View>
+          )}
           
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Tax</Text>
@@ -192,24 +255,26 @@ const CartScreen: React.FC<Props> = ({ navigation }) => {
           </Text>
         </View>
 
-        {/* Bottom spacing */}
-        <View style={{ height: 100 }} />
-      </ScrollView>
+          {/* Bottom spacing */}
+          <View style={{ height: 100 }} />
+        </ScrollView>
+      )}
 
-      {/* Checkout Button */}
-      <View style={styles.footer}>
-        <Button
-          title={`Checkout • ${formatPrice(cart.total)}`}
-          onPress={handleCheckout}
-          disabled={!selectedLocation}
-          style={styles.checkoutButton}
-        />
-        {!selectedLocation && (
-          <Text style={styles.locationWarning}>
-            Please select a pickup location
-          </Text>
-        )}
-      </View>
+      {itemCount > 0 && (
+        <View style={styles.footer}>
+          <Button
+            title={`Checkout • ${formatPrice(cart.total)}`}
+            onPress={handleCheckout}
+            disabled={!selectedLocation}
+            style={styles.checkoutButton}
+          />
+          {!selectedLocation && (
+            <Text style={styles.locationWarning}>
+              Please select a pickup location
+            </Text>
+          )}
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -251,36 +316,43 @@ const styles = StyleSheet.create({
   browseButton: {
     minWidth: 200,
   },
-  locationCard: {
+  locationPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
     backgroundColor: colors.surface,
-    margin: spacing.lg,
-    marginBottom: spacing.md,
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
-    ...shadows.sm,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    maxWidth: 170,
   },
-  locationLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  locationInfo: {
-    marginLeft: spacing.md,
-    flex: 1,
-  },
-  locationLabel: {
-    ...typography.labelSmall,
-    color: colors.text.tertiary,
-  },
-  locationName: {
-    ...typography.titleSmall,
+  locationPillText: {
+    ...typography.labelMedium,
     color: colors.text.primary,
+    maxWidth: 120,
   },
   itemsSection: {
     paddingHorizontal: spacing.lg,
+  },
+  rewardBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+  },
+  rewardBannerText: {
+    ...typography.bodySmall,
+    color: colors.text.secondary,
+    flex: 1,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -310,6 +382,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.warmGray,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  itemImage: {
+    width: '100%',
+    height: '100%',
   },
   itemDetails: {
     flex: 1,

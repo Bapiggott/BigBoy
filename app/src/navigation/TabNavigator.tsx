@@ -1,38 +1,33 @@
 import React from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet, Platform, Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootTabParamList } from './types';
 import { colors, spacing } from '../theme';
 import { useCart } from '../store/CartContext';
 
-import NewsStack from './NewsStack';
 import HomeStack from './HomeStack';
 import MenuStack from './MenuStack';
 import RewardsStack from './RewardsStack';
-import MoreStack from './MoreStack';
 import AccountStack from './AccountStack';
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
-type TabIconName = 
-  | 'newspaper' | 'newspaper-outline'
-  | 'home' | 'home-outline' 
-  | 'restaurant' | 'restaurant-outline' 
-  | 'gift' | 'gift-outline' 
-  | 'ellipsis-horizontal' | 'ellipsis-horizontal-outline'
-  | 'person' | 'person-outline';
+type TabIconName =
+  | 'home-variant'
+  | 'home-variant-outline'
+  | 'silverware-fork-knife'
+  | 'gift-outline'
+  | 'account-outline';
 
 const getTabIcon = (routeName: string, focused: boolean): TabIconName => {
   const icons: Record<string, { focused: TabIconName; unfocused: TabIconName }> = {
-    NewsTab: { focused: 'newspaper', unfocused: 'newspaper-outline' },
-    HomeTab: { focused: 'home', unfocused: 'home-outline' },
-    MenuTab: { focused: 'restaurant', unfocused: 'restaurant-outline' },
-    RewardsTab: { focused: 'gift', unfocused: 'gift-outline' },
-    MoreTab: { focused: 'ellipsis-horizontal', unfocused: 'ellipsis-horizontal-outline' },
-    AccountTab: { focused: 'person', unfocused: 'person-outline' },
+    HomeTab: { focused: 'home-variant', unfocused: 'home-variant-outline' },
+    MenuTab: { focused: 'silverware-fork-knife', unfocused: 'silverware-fork-knife' },
+    RewardsTab: { focused: 'gift-outline', unfocused: 'gift-outline' },
+    AccountTab: { focused: 'account-outline', unfocused: 'account-outline' },
   };
-  return icons[routeName]?.[focused ? 'focused' : 'unfocused'] ?? 'home-outline';
+  return icons[routeName]?.[focused ? 'focused' : 'unfocused'] ?? 'home-variant-outline';
 };
 
 interface CartBadgeProps {
@@ -43,7 +38,7 @@ const CartBadge: React.FC<CartBadgeProps> = ({ count }) => {
   if (count === 0) return null;
   return (
     <View style={styles.badge}>
-      <Ionicons name="cart" size={8} color={colors.text.inverse} />
+      <Text style={styles.badgeText}>{count}</Text>
     </View>
   );
 };
@@ -57,9 +52,25 @@ const TabNavigator: React.FC = () => {
         headerShown: false,
         tabBarIcon: ({ focused, color, size }) => {
           const iconName = getTabIcon(route.name, focused);
+          const iconSize = typeof size === 'number' ? size : 26;
+          const iconExists = Boolean(MaterialCommunityIcons?.glyphMap?.[iconName]);
+          if (!iconExists) {
+            const fallback = route.name === 'HomeTab'
+              ? 'H'
+              : route.name === 'MenuTab'
+              ? 'M'
+              : route.name === 'RewardsTab'
+              ? 'R'
+              : 'P';
+            return (
+              <View style={styles.fallbackIconWrap}>
+                <Text style={[styles.fallbackIconText, { color }]}>{fallback}</Text>
+              </View>
+            );
+          }
           return (
             <View>
-              <Ionicons name={iconName} size={size} color={color} />
+              <MaterialCommunityIcons name={iconName} size={iconSize} color={color} />
               {route.name === 'MenuTab' && <CartBadge count={itemCount} />}
             </View>
           );
@@ -71,11 +82,6 @@ const TabNavigator: React.FC = () => {
       })}
     >
       <Tab.Screen
-        name="NewsTab"
-        component={NewsStack}
-        options={{ tabBarLabel: 'News' }}
-      />
-      <Tab.Screen
         name="HomeTab"
         component={HomeStack}
         options={{ tabBarLabel: 'Home' }}
@@ -84,6 +90,15 @@ const TabNavigator: React.FC = () => {
         name="MenuTab"
         component={MenuStack}
         options={{ tabBarLabel: 'Menu' }}
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            navigation.navigate('MenuTab', {
+              screen: 'Menu',
+              params: { initialCategoryId: 'all' },
+              merge: true,
+            });
+          },
+        })}
       />
       <Tab.Screen
         name="RewardsTab"
@@ -91,14 +106,9 @@ const TabNavigator: React.FC = () => {
         options={{ tabBarLabel: 'Rewards' }}
       />
       <Tab.Screen
-        name="MoreTab"
-        component={MoreStack}
-        options={{ tabBarLabel: 'More' }}
-      />
-      <Tab.Screen
         name="AccountTab"
         component={AccountStack}
-        options={{ tabBarLabel: 'Account' }}
+        options={{ tabBarLabel: 'Profile' }}
       />
     </Tab.Navigator>
   );
@@ -127,6 +137,21 @@ const styles = StyleSheet.create({
     height: 16,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  badgeText: {
+    color: colors.white,
+    fontSize: 9,
+    fontWeight: '700',
+  },
+  fallbackIconWrap: {
+    width: 26,
+    height: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fallbackIconText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
 });
 

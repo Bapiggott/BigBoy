@@ -10,6 +10,7 @@ export type { TypographyVariant } from './typography';
 
 export { spacing, borderRadius, shadows, layout } from './spacing';
 export type { SpacingKey, BorderRadiusKey, ShadowKey } from './spacing';
+export { brandTheme } from './brand';
 
 // Re-export as a unified theme object for convenience
 import { colors } from './colors';

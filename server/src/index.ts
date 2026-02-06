@@ -75,6 +75,7 @@ app.use(errorHandler);
 
 // Server startup
 const PORT = process.env.PORT || 3001;
+const HOST = process.env.HOST || '0.0.0.0';
 
 async function main() {
   try {
@@ -83,8 +84,8 @@ async function main() {
     console.log('✓ Database connected');
 
     // Start server
-    app.listen(PORT, () => {
-      console.log(`✓ Server running on port ${PORT}`);
+    app.listen(Number(PORT), HOST, () => {
+      console.log(`✓ Server running on ${HOST}:${PORT}`);
       console.log(`  Health check: http://localhost:${PORT}/health`);
       console.log(`  API base: http://localhost:${PORT}/api`);
     });

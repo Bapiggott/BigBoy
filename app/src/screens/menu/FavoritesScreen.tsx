@@ -18,6 +18,7 @@ import { colors, typography, spacing } from '../../theme';
 import { useFavorites, useToast, useUser } from '../../store';
 import { MenuItem } from '../../types';
 import { Card } from '../../components/Card';
+import { BrandedHeader, CheckerStrip } from '../../components';
 import { LoadingScreen } from '../../components/LoadingScreen';
 import { resolveMenuImage, MENU_IMAGE_PLACEHOLDER } from '../../assets/menuImageMap';
 
@@ -68,9 +69,20 @@ const FavoritesScreen: React.FC<Props> = ({ navigation }) => {
     }
   }, [isAuthenticated, showToast, toggleFavorite]);
 
+  const normalizePrice = (price: number) => {
+    if (!Number.isFinite(price)) return 0;
+    if (price >= 1000) return price / 100;
+    if (price >= 100 && Number.isInteger(price)) return price / 100;
+    return price;
+  };
+
+  const formatPrice = (price: number) => `$${normalizePrice(price).toFixed(2)}`;
+
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom']}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+        <BrandedHeader title="Favorites" showBack />
+        <CheckerStrip />
         <View style={styles.emptyState}>
           <Ionicons name="heart-outline" size={64} color={colors.text.tertiary} />
           <Text style={styles.emptyTitle}>Log in to see favorites</Text>
@@ -85,7 +97,9 @@ const FavoritesScreen: React.FC<Props> = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <BrandedHeader title="Favorites" showBack />
+      <CheckerStrip />
       <FlatList
         data={favorites}
         keyExtractor={(item) => item.id}
@@ -122,7 +136,7 @@ const FavoritesScreen: React.FC<Props> = ({ navigation }) => {
             <View style={styles.cardContent}>
               <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
               <Text style={styles.itemDescription} numberOfLines={2}>{item.description}</Text>
-              <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
+              <Text style={styles.itemPrice}>{formatPrice(item.price)}</Text>
             </View>
           </Card>
         )}

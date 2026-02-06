@@ -15,11 +15,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { colors, typography, spacing, borderRadius, shadows } from '../../theme';
 import { useCart, useToast } from '../../store';
+import { BrandedHeader } from '../../components';
 import { Button } from '../../components/Button';
 import { LoadingScreen } from '../../components/LoadingScreen';
 import { getMenuItem } from '../../api';
 import { MenuItem, ModifierGroup, Modifier, CartItem } from '../../types';
 import { resolveMenuImage, MENU_IMAGE_PLACEHOLDER } from '../../assets/menuImageMap';
+import { getIngredientOptions } from '../../utils/ingredients';
 
 type MenuStackParamList = {
   Menu: { categoryId?: string };
@@ -42,18 +44,20 @@ const MenuItemImage: React.FC<{ item: MenuItem; style?: StyleProp<ImageStyle> }>
   style,
 }) => {
   const resolved = resolveMenuImage(item);
-  const [source, setSource] = useState(resolved.source);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    setSource(resolved.source);
+    setFailed(false);
   }, [item.id, item.imageUrl, item.image]);
+
+  const isPlaceholder = failed || resolved.source === MENU_IMAGE_PLACEHOLDER;
 
   return (
     <Image
-      source={source}
+      source={failed ? MENU_IMAGE_PLACEHOLDER : resolved.source}
       style={style}
-      resizeMode="cover"
-      onError={() => setSource(MENU_IMAGE_PLACEHOLDER)}
+      resizeMode={isPlaceholder ? 'contain' : 'cover'}
+      onError={() => setFailed(true)}
     />
   );
 };
@@ -68,12 +72,25 @@ const MenuItemDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const [quantity, setQuantity] = useState(1);
   const [selectedModifiers, setSelectedModifiers] = useState<Map<string, SelectedModifier[]>>(new Map());
   const [specialInstructions, setSpecialInstructions] = useState('');
+  const [ingredientOptions, setIngredientOptions] = useState<string[]>([]);
+  const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
+
+  const normalizePrice = (price: number) => {
+    if (!Number.isFinite(price)) return 0;
+    if (price >= 1000) return price / 100;
+    if (price >= 100 && Number.isInteger(price)) return price / 100;
+    return price;
+  };
+  const formatPrice = (price: number) => `$${normalizePrice(price).toFixed(2)}`;
 
   useEffect(() => {
     const fetchItem = async () => {
       try {
         const item = await getMenuItem(itemId);
         setMenuItem(item);
+        const options = getIngredientOptions(item);
+        setIngredientOptions(options);
+        setSelectedIngredients(options);
 
         // Set default modifiers
         if (item?.modifierGroups) {
@@ -159,11 +176,11 @@ const MenuItemDetailScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const calculateTotal = (): number => {
     if (!menuItem) return 0;
-    let total = menuItem.price;
+    let total = normalizePrice(menuItem.price);
 
     selectedModifiers.forEach((modifiers) => {
       modifiers.forEach((mod) => {
-        total += mod.priceAdjustment;
+        total += normalizePrice(mod.priceAdjustment);
       });
     });
 
@@ -204,14 +221,16 @@ const MenuItemDetailScreen: React.FC<Props> = ({ navigation, route }) => {
       menuItem,
       quantity,
       cartModifiers.length > 0 ? cartModifiers : undefined,
-      specialInstructions || undefined
+      specialInstructions || undefined,
+      {
+        ingredientOptions,
+        selectedIngredients,
+      }
     );
 
     showToast(`${menuItem.name} added to cart!`, 'success');
     navigation.goBack();
   };
-
-  const formatPrice = (price: number) => `$${price.toFixed(2)}`;
 
   if (isLoading) {
     return <LoadingScreen message="Loading item details..." />;
@@ -230,7 +249,8 @@ const MenuItemDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <BrandedHeader title="Menu" showBack />
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Image */}
         <View style={styles.imagePlaceholder}>
@@ -325,6 +345,37 @@ const MenuItemDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                   ))}
                 </View>
               ))}
+            </View>
+          )}
+
+          {/* Removals */}
+          {ingredientOptions.length > 0 && (
+            <View style={styles.instructionsSection}>
+              <Text style={styles.instructionsLabel}>Removals</Text>
+              <Text style={styles.instructionsHint}>Uncheck to remove</Text>
+              {ingredientOptions.map((ingredient) => {
+                const enabled = selectedIngredients.includes(ingredient);
+                return (
+                  <TouchableOpacity
+                    key={ingredient}
+                    style={styles.ingredientRow}
+                    onPress={() =>
+                      setSelectedIngredients((prev) =>
+                        prev.includes(ingredient)
+                          ? prev.filter((name) => name !== ingredient)
+                          : [...prev, ingredient]
+                      )
+                    }
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: enabled }}
+                  >
+                    <View style={[styles.ingredientCheckbox, enabled && styles.ingredientCheckboxChecked]}>
+                      {enabled && <Ionicons name="checkmark" size={14} color={colors.white} />}
+                    </View>
+                    <Text style={styles.ingredientText}>{ingredient}</Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           )}
 
@@ -540,6 +591,11 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     marginBottom: spacing.sm,
   },
+  instructionsHint: {
+    ...typography.bodySmall,
+    color: colors.text.tertiary,
+    marginBottom: spacing.sm,
+  },
   instructionsInput: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
@@ -549,6 +605,30 @@ const styles = StyleSheet.create({
     ...typography.bodyMedium,
     color: colors.text.primary,
     minHeight: 80,
+  },
+  ingredientRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  ingredientCheckbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.border.main,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+  },
+  ingredientCheckboxChecked: {
+    backgroundColor: colors.primary.main,
+    borderColor: colors.primary.main,
+  },
+  ingredientText: {
+    ...typography.bodyMedium,
+    color: colors.text.primary,
   },
   footer: {
     flexDirection: 'row',

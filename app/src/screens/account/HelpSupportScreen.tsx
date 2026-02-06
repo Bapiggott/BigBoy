@@ -7,10 +7,10 @@ import {
   TouchableOpacity,
   Linking,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography } from '../../theme';
-import { Card } from '../../components/Card';
-import { OfflineBanner } from '../../components/OfflineBanner';
+import { BrandedHeader, Card, OfflineBanner } from '../../components';
 import { useNetwork } from '../../store/NetworkContext';
 import { useToast } from '../../store/ToastContext';
 
@@ -81,7 +81,8 @@ const HelpSupportScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <BrandedHeader title="Help & Support" showBack />
       <OfflineBanner />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Contact Options */}
@@ -202,7 +203,7 @@ const HelpSupportScreen: React.FC = () => {
           <Text style={styles.appCopyright}>© 2024 Big Boy Restaurants International</Text>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

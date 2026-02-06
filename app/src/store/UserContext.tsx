@@ -13,7 +13,8 @@ interface UserContextValue {
     code: string;
     codeVerifier: string;
     redirectUri: string;
-  }) => Promise<boolean>;
+    clientId?: string;
+  }) => Promise<{ success: boolean; error?: string }>;
   register: (data: {
     email: string;
     password: string;
@@ -101,7 +102,8 @@ export function UserProvider({ children }: UserProviderProps) {
     code: string;
     codeVerifier: string;
     redirectUri: string;
-  }): Promise<boolean> => {
+    clientId?: string;
+  }): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
     try {
       console.log('[UserContext] Google login with auth code');
@@ -109,12 +111,15 @@ export function UserProvider({ children }: UserProviderProps) {
       if (result) {
         await appStorage.setAuthToken(result.token);
         setUser(result.user);
-        return true;
+        return { success: true };
       }
-      return false;
+      return { success: false, error: 'Google login failed' };
     } catch (error) {
       console.error('Google login failed:', error);
-      return false;
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Google login failed',
+      };
     } finally {
       setIsLoading(false);
     }

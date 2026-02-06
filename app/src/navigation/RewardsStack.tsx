@@ -16,7 +16,8 @@ const RewardsStack: React.FC = () => {
         headerStyle: {
           backgroundColor: colors.background,
         },
-        headerTintColor: colors.text.primary,
+        headerTintColor: '#000',
+        headerBackTitleVisible: false,
         headerTitleStyle: {
           fontWeight: '600',
         },
@@ -26,12 +27,12 @@ const RewardsStack: React.FC = () => {
       <Stack.Screen
         name="Rewards"
         component={RewardsScreen}
-        options={{ title: 'Rewards' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="RewardDetail"
         component={RewardDetailScreen}
-        options={{ title: '' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="MyRewards"

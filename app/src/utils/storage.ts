@@ -14,6 +14,11 @@ export const STORAGE_KEYS = {
   CACHED_LOCATIONS: '@bigboy/cached_locations',
   CACHED_REWARDS: '@bigboy/cached_rewards',
   LAST_SYNC: '@bigboy/last_sync',
+  REWARD_POINTS: 'bb_points',
+  REWARD_REDEMPTIONS: 'bb_redeemed_rewards',
+  APPLIED_REWARD_ID: 'bb_applied_reward_id',
+  REWARD_COUPONS: 'bb_reward_coupons',
+  APPLIED_COUPON_ID: 'bb_applied_coupon_id',
 } as const;
 
 /**

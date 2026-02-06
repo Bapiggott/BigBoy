@@ -49,7 +49,7 @@ const EditCartItemScreen: React.FC<Props> = ({ navigation, route }) => {
   if (!item) {
     return (
       <View style={styles.container}>
-        <BrandedHeader title="Edit Item" />
+        <BrandedHeader title="Edit Item" showBack />
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>Item not found.</Text>
           <Button title="Back to Cart" onPress={() => navigation.goBack()} />
@@ -87,7 +87,7 @@ const EditCartItemScreen: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <View style={styles.container}>
-      <BrandedHeader title="Edit Item" />
+      <BrandedHeader title="Edit Item" showBack />
       <ScrollView contentContainerStyle={styles.content}>
         <Card style={styles.section} variant="outlined">
           <Text style={styles.itemName}>{item.name}</Text>

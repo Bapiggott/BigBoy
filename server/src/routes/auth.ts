@@ -1,4 +1,5 @@
 import { Router, Response, NextFunction } from 'express';
+import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '../index.js';
@@ -26,11 +27,21 @@ const updatePasswordSchema = z.object({
   newPassword: z.string().min(8, 'New password must be at least 8 characters'),
 });
 
+const forgotPasswordSchema = z.object({
+  email: z.string().email('Invalid email address'),
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(1, 'Reset token is required'),
+  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
 const googleLoginSchema = z.object({
   idToken: z.string().min(1).optional(),
   code: z.string().min(1).optional(),
   codeVerifier: z.string().min(1).optional(),
   redirectUri: z.string().min(1).optional(),
+  clientId: z.string().min(1).optional(),
 }).refine((data) => data.idToken || data.code, {
   message: 'Either idToken or code is required',
 });
@@ -203,6 +214,80 @@ router.post('/logout', authenticate, async (_req: AuthenticatedRequest, res: Res
   res.json({ message: 'Logged out successfully' });
 });
 
+/**
+ * POST /api/auth/forgot-password
+ * Generate a reset token (dev: log to console)
+ */
+router.post('/forgot-password', async (req, res: Response, next: NextFunction) => {
+  try {
+    const { email } = forgotPasswordSchema.parse(req.body);
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (user) {
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+      await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
+      await prisma.passwordResetToken.create({
+        data: {
+          userId: user.id,
+          tokenHash,
+          expiresAt,
+        },
+      });
+
+      console.log('[Auth] Password reset requested', {
+        email,
+        tokenPrefix: rawToken.slice(0, 8),
+        resetToken: rawToken,
+      });
+    }
+
+    res.json({ message: 'If an account exists, we will email a reset link.' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/auth/reset-password
+ * Reset password using a token
+ */
+router.post('/reset-password', async (req, res: Response, next: NextFunction) => {
+  try {
+    const { token, newPassword } = resetPasswordSchema.parse(req.body);
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    const resetRecord = await prisma.passwordResetToken.findFirst({
+      where: {
+        tokenHash,
+        usedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+    });
+
+    if (!resetRecord) {
+      throw createError('Invalid or expired reset token', 400, 'INVALID_RESET_TOKEN');
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await prisma.user.update({
+      where: { id: resetRecord.userId },
+      data: { passwordHash },
+    });
+
+    await prisma.passwordResetToken.update({
+      where: { id: resetRecord.id },
+      data: { usedAt: new Date() },
+    });
+
+    res.json({ message: 'Password reset successful' });
+  } catch (error) {
+    next(error);
+  }
+});
+
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 
@@ -212,24 +297,31 @@ const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
  */
 router.post('/google', async (req, res: Response, next: NextFunction) => {
   try {
-    const { idToken, code, codeVerifier, redirectUri } = googleLoginSchema.parse(req.body);
+    const { idToken, code, codeVerifier, redirectUri, clientId } = googleLoginSchema.parse(req.body);
 
     let tokenToVerify = idToken;
 
     if (!tokenToVerify && code) {
-      if (!GOOGLE_CLIENT_ID) {
+      const exchangeClientId = clientId ?? GOOGLE_CLIENT_ID;
+      if (!exchangeClientId) {
         throw createError('Google client ID not configured', 500, 'GOOGLE_CLIENT_ID_MISSING');
       }
 
+      console.log('[GoogleAuth] Exchange code', {
+        codePrefix: code.slice(0, 8),
+        redirectUri,
+      });
+
       const body = new URLSearchParams({
         code,
-        client_id: GOOGLE_CLIENT_ID,
+        client_id: exchangeClientId,
         code_verifier: codeVerifier ?? '',
         redirect_uri: redirectUri ?? '',
         grant_type: 'authorization_code',
       });
 
-      if (GOOGLE_CLIENT_SECRET) {
+      const shouldSendSecret = GOOGLE_CLIENT_SECRET && (!clientId || clientId === GOOGLE_CLIENT_ID);
+      if (shouldSendSecret) {
         body.append('client_secret', GOOGLE_CLIENT_SECRET);
       }
 
@@ -252,25 +344,25 @@ router.post('/google', async (req, res: Response, next: NextFunction) => {
       throw createError('ID token missing', 400, 'MISSING_ID_TOKEN');
     }
 
-    // Decode the Google ID token to get user info
-    // NOTE: In production, use google-auth-library to verify the token!
-    // const { OAuth2Client } = require('google-auth-library');
-    // const client = new OAuth2Client(GOOGLE_CLIENT_ID);
-    // const ticket = await client.verifyIdToken({ idToken, audience: GOOGLE_CLIENT_ID });
-    // const payload = ticket.getPayload();
-
-    // For development, decode the JWT payload directly
-    // WARNING: This does NOT verify the token signature!
-    let payload: { email?: string; given_name?: string; family_name?: string; sub?: string };
-    try {
-      const parts = tokenToVerify.split('.');
-      if (parts.length !== 3) {
-        throw createError('Invalid ID token format', 400, 'INVALID_TOKEN');
-      }
-      payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
-    } catch (e) {
-      throw createError('Could not decode ID token', 400, 'INVALID_TOKEN');
+    // Verify/parse the Google ID token using tokeninfo (dev-friendly)
+    const tokenInfoRes = await fetch(
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(tokenToVerify)}`
+    );
+    const tokenInfo: any = await tokenInfoRes.json();
+    if (!tokenInfoRes.ok) {
+      console.error('[GoogleAuth] tokeninfo failed', {
+        status: tokenInfoRes.status,
+        body: tokenInfo,
+      });
+      throw createError('Google token verification failed', 400, 'GOOGLE_TOKENINFO_FAILED');
     }
+
+    const payload = {
+      email: tokenInfo.email,
+      given_name: tokenInfo.given_name || tokenInfo.name?.split(' ')[0],
+      family_name: tokenInfo.family_name || tokenInfo.name?.split(' ').slice(1).join(' '),
+      sub: tokenInfo.sub,
+    };
 
     if (!payload.email) {
       throw createError('Email not found in token', 400, 'MISSING_EMAIL');

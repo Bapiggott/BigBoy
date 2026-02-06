@@ -16,7 +16,8 @@ const HomeStack: React.FC = () => {
         headerStyle: {
           backgroundColor: colors.background,
         },
-        headerTintColor: colors.text.primary,
+        headerTintColor: '#000',
+        headerBackTitleVisible: false,
         headerTitleStyle: {
           fontWeight: '600',
         },

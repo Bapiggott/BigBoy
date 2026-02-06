@@ -5,3 +5,4 @@ export { CartProvider, useCart } from './CartContext';
 export { UserProvider, useUser } from './UserContext';
 export { LocationProvider, useLocation } from './LocationContext';
 export { NetworkProvider, useNetwork } from './NetworkContext';
+export { RewardsProvider, useRewards } from './RewardsContext';

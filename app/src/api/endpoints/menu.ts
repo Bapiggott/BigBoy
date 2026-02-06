@@ -1,14 +1,17 @@
 import { apiClient } from '../client';
 import { MenuCategory, MenuItem } from '../../types';
 import { mockCategories, mockMenuItems } from '../../data/mockMenu';
-import { API_BASE_URL, USE_MOCK } from '../../config';
+import { USE_MOCK } from '../../config';
 
 /**
  * Menu API Endpoints
  * API-first with safe mock fallback.
  */
 
-apiClient.setBaseUrl(API_BASE_URL);
+type MenuSource = 'api' | 'mock';
+let lastMenuSource: MenuSource = USE_MOCK ? 'mock' : 'api';
+
+export const getMenuSource = (): MenuSource => lastMenuSource;
 
 const withApiFallback = async <T>(
   label: string,
@@ -16,12 +19,16 @@ const withApiFallback = async <T>(
   mockCall: () => Promise<T>
 ): Promise<T> => {
   if (USE_MOCK) {
+    lastMenuSource = 'mock';
     return mockCall();
   }
 
   try {
-    return await apiCall();
+    const result = await apiCall();
+    lastMenuSource = 'api';
+    return result;
   } catch (error) {
+    lastMenuSource = 'mock';
     console.warn(`[Menu API] ${label} failed, using mock data.`, error);
     return mockCall();
   }
@@ -30,11 +37,12 @@ const withApiFallback = async <T>(
 /**
  * Get all menu categories
  */
-export const getCategories = async (): Promise<MenuCategory[]> => {
+export const getCategories = async (locationId?: string): Promise<MenuCategory[]> => {
   return withApiFallback(
     'getCategories',
     async () => {
-      const response = await apiClient.get<{ categories: MenuCategory[] }>('/menu/categories');
+      const suffix = locationId ? `?locationId=${encodeURIComponent(locationId)}` : '';
+      const response = await apiClient.get<{ categories: MenuCategory[] }>(`/menu/categories${suffix}`);
       if (response.success && response.data?.categories) {
         return response.data.categories;
       }
@@ -50,11 +58,12 @@ export const getCategories = async (): Promise<MenuCategory[]> => {
 /**
  * Get all menu items
  */
-export const getMenuItems = async (): Promise<MenuItem[]> => {
+export const getMenuItems = async (locationId?: string): Promise<MenuItem[]> => {
   return withApiFallback(
     'getMenuItems',
     async () => {
-      const response = await apiClient.get<{ items: MenuItem[] }>('/menu/items');
+      const suffix = locationId ? `?locationId=${encodeURIComponent(locationId)}` : '';
+      const response = await apiClient.get<{ items: MenuItem[] }>(`/menu/items${suffix}`);
       if (response.success && response.data?.items) {
         return response.data.items;
       }
@@ -70,12 +79,13 @@ export const getMenuItems = async (): Promise<MenuItem[]> => {
 /**
  * Get menu items by category
  */
-export const getMenuItemsByCategory = async (categoryId: string): Promise<MenuItem[]> => {
+export const getMenuItemsByCategory = async (categoryId: string, locationId?: string): Promise<MenuItem[]> => {
   return withApiFallback(
     'getMenuItemsByCategory',
     async () => {
+      const locationSuffix = locationId ? `&locationId=${encodeURIComponent(locationId)}` : '';
       const response = await apiClient.get<{ items: MenuItem[] }>(
-        `/menu/items?category=${encodeURIComponent(categoryId)}`
+        `/menu/items?category=${encodeURIComponent(categoryId)}${locationSuffix}`
       );
       if (response.success && response.data?.items) {
         return response.data.items;
@@ -112,11 +122,14 @@ export const getMenuItem = async (itemId: string): Promise<MenuItem | null> => {
 /**
  * Get popular/featured menu items
  */
-export const getPopularItems = async (): Promise<MenuItem[]> => {
+export const getPopularItems = async (locationId?: string): Promise<MenuItem[]> => {
   return withApiFallback(
     'getPopularItems',
     async () => {
-      const response = await apiClient.get<{ items: MenuItem[] }>('/menu/items?popular=true');
+      const locationSuffix = locationId ? `&locationId=${encodeURIComponent(locationId)}` : '';
+      const response = await apiClient.get<{ items: MenuItem[] }>(
+        `/menu/items?popular=true${locationSuffix}`
+      );
       if (response.success && response.data?.items) {
         return response.data.items;
       }
@@ -132,11 +145,12 @@ export const getPopularItems = async (): Promise<MenuItem[]> => {
 /**
  * Get new menu items
  */
-export const getNewItems = async (): Promise<MenuItem[]> => {
+export const getNewItems = async (locationId?: string): Promise<MenuItem[]> => {
   return withApiFallback(
     'getNewItems',
     async () => {
-      const response = await apiClient.get<{ new: MenuItem[] }>('/menu/featured');
+      const suffix = locationId ? `?locationId=${encodeURIComponent(locationId)}` : '';
+      const response = await apiClient.get<{ new: MenuItem[] }>(`/menu/featured${suffix}`);
       if (response.success && response.data?.new) {
         return response.data.new;
       }

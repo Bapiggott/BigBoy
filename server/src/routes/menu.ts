@@ -10,7 +10,7 @@ const router = Router();
 router.get('/categories', async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const categories = await prisma.category.findMany({
-      where: { isActive: true },
+      where: { isActive: true, slug: { not: 'current-promotion' } },
       orderBy: { sortOrder: 'asc' },
       include: {
         _count: {
@@ -20,14 +20,16 @@ router.get('/categories', async (_req: Request, res: Response, next: NextFunctio
     });
     
     res.json({
-      categories: categories.map(c => ({
-        id: c.id,
-        name: c.name,
-        slug: c.slug,
-        description: c.description,
-        imageUrl: c.imageUrl,
-        itemCount: c._count.items,
-      })),
+      categories: categories
+        .filter((c) => c.slug !== 'current-promotion')
+        .map(c => ({
+          id: c.id,
+          name: c.name,
+          slug: c.slug,
+          description: c.description,
+          imageUrl: c.imageUrl,
+          itemCount: c._count.items,
+        })),
     });
   } catch (error) {
     next(error);
@@ -96,8 +98,10 @@ router.get('/items', async (req: Request, res: Response, next: NextFunction) => 
       ],
     });
     
+    const filteredItems = items.filter((item) => item.category?.slug !== 'current-promotion');
+
     res.json({
-      items: items.map(formatMenuItem),
+      items: filteredItems.map(formatMenuItem),
     });
   } catch (error) {
     next(error);
@@ -177,9 +181,12 @@ router.get('/featured', async (_req: Request, res: Response, next: NextFunction)
       category: item.category,
     });
     
+    const filteredPopular = popular.filter((item) => item.category?.slug !== 'current-promotion');
+    const filteredNew = newItems.filter((item) => item.category?.slug !== 'current-promotion');
+
     res.json({
-      popular: popular.map(formatSimple),
-      new: newItems.map(formatSimple),
+      popular: filteredPopular.map(formatSimple),
+      new: filteredNew.map(formatSimple),
     });
   } catch (error) {
     next(error);

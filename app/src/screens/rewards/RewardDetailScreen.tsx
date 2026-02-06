@@ -4,30 +4,32 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  Image,
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { colors, typography, spacing, borderRadius } from '../../theme';
-import { Card, Button, LoadingScreen } from '../../components';
-import { useUser, useToast } from '../../store';
+import { BrandedHeader, Card, Button, LoadingScreen } from '../../components';
+import { useRewards, useToast } from '../../store';
 import { Reward } from '../../types';
 import * as rewardsApi from '../../api/endpoints/rewards';
+import { getRewardImage } from '../../assets/rewardImages';
 
 type Props = NativeStackScreenProps<{ RewardDetail: { rewardId: string } }, 'RewardDetail'>;
 
 const RewardDetailScreen = ({ route }: Props) => {
   const { rewardId } = route.params;
   const navigation = useNavigation();
-  const { user, refreshUser } = useUser();
+  const { points, redeemReward } = useRewards();
   const { showToast } = useToast();
 
   const [reward, setReward] = useState<Reward | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRedeeming, setIsRedeeming] = useState(false);
 
-  const userPoints = user?.loyaltyStatus?.currentPoints ?? 0;
+  const userPoints = points;
 
   const fetchReward = useCallback(async () => {
     try {
@@ -48,10 +50,7 @@ const RewardDetailScreen = ({ route }: Props) => {
     if (!reward) return;
 
     if (userPoints < reward.pointsCost) {
-      Alert.alert(
-        'Not Enough Points',
-        `You need ${reward.pointsCost - userPoints} more points to redeem this reward.`
-      );
+      showToast('Not enough points', 'error');
       return;
     }
 
@@ -65,14 +64,9 @@ const RewardDetailScreen = ({ route }: Props) => {
           onPress: async () => {
             setIsRedeeming(true);
             try {
-              const result = await rewardsApi.redeemReward(reward.id);
-              if (result) {
-                showToast('Reward redeemed successfully!', 'success');
-                refreshUser();
-                navigation.goBack();
-              } else {
-                showToast('Failed to redeem reward. Please try again.', 'error');
-              }
+              await redeemReward({ id: reward.id, name: reward.name, pointsCost: reward.pointsCost });
+              showToast('Reward redeemed! Check My Coupons.', 'success');
+              navigation.goBack();
             } catch (error) {
               console.error('Redeem failed:', error);
               showToast('Something went wrong. Please try again.', 'error');
@@ -103,25 +97,9 @@ const RewardDetailScreen = ({ route }: Props) => {
 
   return (
     <View style={styles.container}>
+      <BrandedHeader title="Reward" showBack />
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        {/* Reward Icon */}
-        <View style={styles.iconContainer}>
-          <View style={styles.iconCircle}>
-            <Ionicons
-              name={
-                reward.category === 'food'
-                  ? 'restaurant'
-                  : reward.category === 'drink'
-                  ? 'cafe'
-                  : reward.category === 'dessert'
-                  ? 'ice-cream'
-                  : 'gift'
-              }
-              size={48}
-              color={colors.primary.main}
-            />
-          </View>
-        </View>
+        <Image source={getRewardImage(reward)} style={styles.rewardImage} resizeMode="cover" />
 
         {/* Reward Info */}
         <Text style={styles.name}>{reward.name}</Text>
@@ -187,7 +165,11 @@ const RewardDetailScreen = ({ route }: Props) => {
       {/* Redeem Button */}
       <View style={styles.footer}>
         <Button
-          title={canRedeem ? `Redeem for ${reward.pointsCost} Points` : `Need ${pointsNeeded} More Points`}
+          title={
+            canRedeem
+              ? `Redeem for ${reward.pointsCost} Points`
+              : `Need ${pointsNeeded} More Points`
+          }
           onPress={handleRedeem}
           disabled={!canRedeem}
           loading={isRedeeming}
@@ -209,6 +191,12 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     paddingBottom: spacing['4xl'],
   },
+  rewardImage: {
+    width: '100%',
+    height: 220,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.lg,
+  },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -219,18 +207,6 @@ const styles = StyleSheet.create({
     ...typography.bodyLarge,
     color: colors.text.secondary,
     marginTop: spacing.lg,
-  },
-  iconContainer: {
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
-  iconCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: colors.primary.light,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   name: {
     ...typography.headlineMedium,

@@ -35,7 +35,7 @@ A full-featured mobile app for Big Boy Restaurant with ordering, rewards, and lo
 ### 1. Clone and Install
 
 ```bash
-git clone <repo-url> bigboy-app
+git clone https://github.com/Bapiggott/BigBoy.git
 cd bigboy-app
 ```
 

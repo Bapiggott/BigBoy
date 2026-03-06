@@ -21,6 +21,7 @@ export interface User {
   lastName: string;
   phone?: string;
   birthday?: string;
+  role: 'admin' | 'user';
   loyaltyStatus: LoyaltyStatus;
   createdAt: string;
 }

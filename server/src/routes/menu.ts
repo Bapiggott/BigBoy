@@ -41,7 +41,7 @@ router.get('/categories', async (_req: Request, res: Response, next: NextFunctio
  */
 router.get('/items', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { category, popular, search } = req.query;
+    const { category, popular, search, locationId } = req.query;
     
     const where: Record<string, unknown> = {
       isAvailable: true,
@@ -71,6 +71,18 @@ router.get('/items', async (req: Request, res: Response, next: NextFunction) => 
         { name: { contains: search as string } },
         { description: { contains: search as string } },
       ];
+    }
+
+    // If a location is specified, exclude items that are overridden as unavailable
+    if (locationId) {
+      const excludedItems = await prisma.locationMenuOverride.findMany({
+        where: { locationId: locationId as string, isAvailable: false },
+        select: { menuItemId: true },
+      });
+      
+      if (excludedItems.length > 0) {
+        where.id = { notIn: excludedItems.map(e => e.menuItemId) };
+      }
     }
     
     const items = await prisma.menuItem.findMany({

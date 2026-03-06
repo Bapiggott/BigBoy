@@ -104,6 +104,7 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.lg,
     gap: spacing.lg,
+    paddingBottom: spacing['4xl'],
   },
   hero: {
     height: 220,

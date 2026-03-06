@@ -54,6 +54,9 @@ export function UserProvider({ children }: UserProviderProps) {
         }
       } catch (error) {
         console.error('Auth check failed:', error);
+        // Clear stale token on any error (server unreachable, token expired, etc.)
+        await appStorage.clearAuthToken();
+        setUser(null);
       } finally {
         setIsLoading(false);
       }

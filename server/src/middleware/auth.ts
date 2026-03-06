@@ -112,22 +112,33 @@ export function optionalAuth(
 }
 
 /**
- * Admin authentication middleware (for local admin tools)
+ * Admin authentication middleware - requires ADMIN role
  */
 export function adminAuth(
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): void {
-  // In production, implement proper admin role checking
-  // For local dev, we'll allow authenticated users
-  authenticate(req, res, (error) => {
+  authenticate(req, res, async (error) => {
     if (error) {
       next(error);
     } else {
-      // TODO: Add admin role check when roles are implemented
-      // For now, any authenticated user can access admin routes locally
-      next();
+      try {
+        // Dynamic import to avoid circular deps
+        const { prisma } = await import('../index.js');
+        const user = await prisma.user.findUnique({
+          where: { id: req.user!.userId },
+          select: { role: true },
+        });
+
+        if (!user || user.role !== 'ADMIN') {
+          next(createError('Admin access required', 403, 'ADMIN_REQUIRED'));
+        } else {
+          next();
+        }
+      } catch (err) {
+        next(err);
+      }
     }
   });
 }

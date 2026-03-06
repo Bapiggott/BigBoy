@@ -7,6 +7,7 @@ import {
   Image,
   Alert,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -24,6 +25,7 @@ const RewardDetailScreen = ({ route }: Props) => {
   const navigation = useNavigation();
   const { points, redeemReward } = useRewards();
   const { showToast } = useToast();
+  const insets = useSafeAreaInsets();
 
   const [reward, setReward] = useState<Reward | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -96,7 +98,7 @@ const RewardDetailScreen = ({ route }: Props) => {
   const pointsNeeded = reward.pointsCost - userPoints;
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <BrandedHeader title="Reward" showBack />
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         <Image source={getRewardImage(reward)} style={styles.rewardImage} resizeMode="cover" />
@@ -163,7 +165,7 @@ const RewardDetailScreen = ({ route }: Props) => {
       </ScrollView>
 
       {/* Redeem Button */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
         <Button
           title={
             canRedeem
@@ -175,7 +177,7 @@ const RewardDetailScreen = ({ route }: Props) => {
           loading={isRedeeming}
         />
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 

@@ -105,14 +105,15 @@ async function main() {
       },
       {
         id: 'user-3',
-        email: 'gold@example.com',
+        email: 'admin@bigboy.com',
         phone: '5555555555',
         passwordHash,
-        firstName: 'Gold',
-        lastName: 'Member',
+        firstName: 'Admin',
+        lastName: 'User',
         loyaltyPoints: 5000,
         loyaltyTier: 'GOLD',
         lifetimePoints: 12500,
+        role: 'ADMIN',
       },
     ],
   });
@@ -314,6 +315,23 @@ async function main() {
   // ============ MENU ITEMS ============
   const categoriesById = new Map(filteredCategories.map((category) => [category.id, category]));
 
+  // IDs of items to feature on the home screen
+  const POPULAR_ITEM_IDS = new Set([
+    'item-burger-big-boy',
+    'item-burger-super-big-boy',
+    'item-burger-bbq-bacon-cheeseburger',
+    'item-dinners-southern-fried-chicken',
+    'item-dinners-chicken-parmesan',
+    'item-desserts-hot-fudge-ice-cream-cake',
+  ]);
+
+  const NEW_ITEM_IDS = new Set([
+    'item-burger-best-cheeseburger-on-the-planet',
+    'item-breakfast-chicken-and-waffle',
+    'item-desserts-strawberry-cream-puff',
+    'item-appetizers-loaded-waffle-fries',
+  ]);
+
   const menuItemsData = filteredItems.map((item) => {
     const category = categoriesById.get(item.categoryId);
     const categorySlug = category?.slug ?? 'uncategorized';
@@ -328,8 +346,8 @@ async function main() {
       imageUrl: item.imageKey ?? null,
       calories: item.calories ?? null,
       prepTime: null,
-      isPopular: false,
-      isNew: false,
+      isPopular: POPULAR_ITEM_IDS.has(item.id),
+      isNew: NEW_ITEM_IDS.has(item.id),
       isAvailable: true,
     };
   });
@@ -339,6 +357,20 @@ async function main() {
   });
 
   console.log(`✓ Created ${createdMenuItems.count} menu items`);
+
+  const menuItemsById = new Map(menuItemsData.map((item) => [item.id, item]));
+  const getMenuItem = (id: string) => {
+    const item = menuItemsById.get(id);
+    if (!item) {
+      throw new Error(`Sample order references unknown menu item id: ${id}`);
+    }
+    return item;
+  };
+
+  const burgerItem = getMenuItem('item-burger-big-boy');
+  const drinkItem = getMenuItem('item-sides-drinks-hot-beverages');
+  const breakfastItem = getMenuItem('item-breakfast-breakfast-burrito');
+  const dessertItem = getMenuItem('item-desserts-hot-fudge-ice-cream-cake');
 
   // ============ REWARDS ============
   const rewards = await prisma.reward.createMany({
@@ -397,17 +429,17 @@ async function main() {
       items: {
         create: [
           {
-            menuItemId: 'item-10',
-            name: 'Big Boy Burger',
+            menuItemId: burgerItem.id,
+            name: burgerItem.name,
             quantity: 2,
-            unitPrice: 12.99,
+            unitPrice: burgerItem.price,
             totalPrice: 25.98,
           },
           {
-            menuItemId: 'item-70',
-            name: 'Soft Drink',
+            menuItemId: drinkItem.id,
+            name: drinkItem.name,
             quantity: 1,
-            unitPrice: 2.99,
+            unitPrice: drinkItem.price,
             totalPrice: 2.99,
           },
         ],
@@ -435,24 +467,24 @@ async function main() {
       items: {
         create: [
           {
-            menuItemId: 'item-1',
-            name: 'Big Boy Breakfast',
+            menuItemId: breakfastItem.id,
+            name: breakfastItem.name,
             quantity: 2,
-            unitPrice: 11.99,
+            unitPrice: breakfastItem.price,
             totalPrice: 23.98,
           },
           {
-            menuItemId: 'item-60',
-            name: 'Hot Fudge Cake',
+            menuItemId: dessertItem.id,
+            name: dessertItem.name,
             quantity: 1,
-            unitPrice: 7.99,
+            unitPrice: dessertItem.price,
             totalPrice: 7.99,
           },
           {
-            menuItemId: 'item-71',
-            name: 'Fresh Brewed Coffee',
+            menuItemId: drinkItem.id,
+            name: drinkItem.name,
             quantity: 2,
-            unitPrice: 2.49,
+            unitPrice: drinkItem.price,
             totalPrice: 4.98,
           },
         ],
@@ -462,11 +494,108 @@ async function main() {
   
   console.log('✓ Created sample orders');
 
+  // ─── Promo Codes ──────────────────────────────────────────
+  await prisma.promoCode.deleteMany();
+  
+  await prisma.promoCode.createMany({
+    data: [
+      {
+        code: 'WELCOME10',
+        name: 'Welcome 10% Off',
+        description: 'Get 10% off your first order!',
+        discountType: 'PERCENTAGE',
+        discountValue: 10,
+        template: 'FIRST_ORDER',
+        maxDiscount: 5.00,
+        maxTotalUses: 10000,
+        maxUsesPerUser: 1,
+        isActive: true,
+      },
+      {
+        code: 'BIGBOGO',
+        name: 'BOGO Burgers',
+        description: 'Buy one burger, get the second free!',
+        discountType: 'BOGO',
+        discountValue: 100,
+        template: 'BOGO_ITEM',
+        isActive: true,
+      },
+      {
+        code: 'SAVE5',
+        name: '$5 Off $25+',
+        description: 'Get $5 off any order of $25 or more',
+        discountType: 'FIXED_AMOUNT',
+        discountValue: 5.00,
+        template: 'DOLLAR_OFF',
+        minOrderAmount: 25.00,
+        maxTotalUses: 500,
+        expiresAt: new Date('2025-12-31'),
+        isActive: true,
+      },
+      {
+        code: 'SUMMER20',
+        name: 'Summer Special 20% Off',
+        description: '20% off all orders this summer!',
+        discountType: 'PERCENTAGE',
+        discountValue: 20,
+        template: 'SEASONAL',
+        maxDiscount: 10.00,
+        expiresAt: new Date('2025-09-01'),
+        isActive: true,
+      },
+    ],
+  });
+
+  console.log('✓ Created promo codes (WELCOME10, BIGBOGO, SAVE5, SUMMER20)');
+
+  // ─── Discounts (auto-applied deals) ───────────────────────
+  await prisma.discount.deleteMany();
+
+  await prisma.discount.createMany({
+    data: [
+      {
+        name: 'Taco Tuesday',
+        description: '15% off all orders on Tuesdays',
+        discountType: 'PERCENTAGE',
+        discountValue: 15,
+        activeDays: JSON.stringify([2]), // Tuesday = 2
+        maxDiscount: 8.00,
+        priority: 10,
+        isActive: true,
+      },
+      {
+        name: 'Happy Hour',
+        description: '10% off orders between 3-5 PM',
+        discountType: 'PERCENTAGE',
+        discountValue: 10,
+        activeTimeStart: '15:00',
+        activeTimeEnd: '17:00',
+        maxDiscount: 5.00,
+        priority: 5,
+        stackable: true,
+        isActive: true,
+      },
+      {
+        name: 'Weekend Family Deal',
+        description: '$3 off orders over $30 on weekends',
+        discountType: 'FIXED_AMOUNT',
+        discountValue: 3.00,
+        activeDays: JSON.stringify([0, 6]), // Sun, Sat
+        minOrderAmount: 30.00,
+        priority: 3,
+        isActive: true,
+      },
+    ],
+  });
+
+  console.log('✓ Created auto-discount deals (Taco Tuesday, Happy Hour, Weekend Family)');
+
   console.log('\n✅ Database seeded successfully!');
   console.log('\n🔧 Test accounts:');
   console.log('   john@example.com / password123 (Silver tier, 2450 pts)');
   console.log('   jane@example.com / password123 (Bronze tier, 850 pts)');
-  console.log('   gold@example.com / password123 (Gold tier, 5000 pts)');
+  console.log('   gold@example.com / password123 (Gold tier, 5000 pts) → renamed to admin@bigboy.com');
+  console.log('   admin@bigboy.com / password123 (Admin, Gold tier, 5000 pts)');
 }
 
 main()

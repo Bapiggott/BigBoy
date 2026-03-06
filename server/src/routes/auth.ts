@@ -86,6 +86,7 @@ router.post('/register', async (req, res: Response, next: NextFunction) => {
         firstName: true,
         lastName: true,
         phone: true,
+        role: true,
         loyaltyPoints: true,
         loyaltyTier: true,
         lifetimePoints: true,
@@ -418,6 +419,7 @@ function formatUser(user: {
   firstName: string;
   lastName: string;
   phone: string | null;
+  role: string;
   loyaltyPoints: number;
   loyaltyTier: string;
   lifetimePoints: number;
@@ -434,6 +436,7 @@ function formatUser(user: {
     firstName: user.firstName,
     lastName: user.lastName,
     phone: user.phone,
+    role: user.role.toLowerCase(),
     loyaltyStatus: {
       currentPoints: user.loyaltyPoints,
       lifetimePoints: user.lifetimePoints,

@@ -153,6 +153,7 @@ const styles = StyleSheet.create({
   listContent: {
     padding: spacing.lg,
     gap: spacing.md,
+    paddingBottom: spacing['4xl'],
   },
   card: {
     overflow: 'hidden',

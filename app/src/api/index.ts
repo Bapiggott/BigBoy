@@ -7,6 +7,7 @@ import * as locationsApi from './endpoints/locations';
 import * as menuApi from './endpoints/menu';
 import * as ordersApi from './endpoints/orders';
 import * as rewardsApi from './endpoints/rewards';
+import * as adminApi from './endpoints/admin';
 
 export {
   authApi,
@@ -14,6 +15,7 @@ export {
   menuApi,
   ordersApi,
   rewardsApi,
+  adminApi,
 };
 
 // Also export individual functions for direct import
@@ -68,3 +70,12 @@ export {
   logout,
   requestPasswordReset,
 } from './endpoints/auth';
+
+export {
+  getAdminMenuItems,
+  getAdminCategories,
+  createMenuItem,
+  updateMenuItem,
+  deleteMenuItem,
+  toggleMenuItemAvailability,
+} from './endpoints/admin';

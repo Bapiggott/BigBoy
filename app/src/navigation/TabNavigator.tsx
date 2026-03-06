@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet, Platform, Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootTabParamList } from './types';
 import { colors, spacing } from '../theme';
 import { useCart } from '../store/CartContext';
@@ -45,6 +46,9 @@ const CartBadge: React.FC<CartBadgeProps> = ({ count }) => {
 
 const TabNavigator: React.FC = () => {
   const { itemCount } = useCart();
+  const insets = useSafeAreaInsets();
+  const bottomPadding = Math.max(insets.bottom, spacing.sm);
+  const tabBarHeight = 56 + bottomPadding;
 
   return (
     <Tab.Navigator
@@ -77,7 +81,14 @@ const TabNavigator: React.FC = () => {
         },
         tabBarActiveTintColor: colors.primary.main,
         tabBarInactiveTintColor: colors.text.tertiary,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: {
+          backgroundColor: colors.background,
+          borderTopColor: colors.border.light,
+          borderTopWidth: 1,
+          paddingTop: spacing.xs,
+          paddingBottom: bottomPadding,
+          height: tabBarHeight,
+        },
         tabBarLabelStyle: styles.tabBarLabel,
       })}
     >
@@ -115,14 +126,6 @@ const TabNavigator: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: colors.background,
-    borderTopColor: colors.border.light,
-    borderTopWidth: 1,
-    paddingTop: spacing.xs,
-    paddingBottom: Platform.OS === 'ios' ? spacing.lg : spacing.sm,
-    height: Platform.OS === 'ios' ? 88 : 64,
-  },
   tabBarLabel: {
     fontSize: 11,
     fontWeight: '500',

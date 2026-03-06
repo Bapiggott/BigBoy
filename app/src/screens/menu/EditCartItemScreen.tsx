@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   TextInput,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { colors, typography, spacing, borderRadius } from '../../theme';
@@ -86,7 +87,7 @@ const EditCartItemScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <BrandedHeader title="Edit Item" showBack />
       <ScrollView contentContainerStyle={styles.content}>
         <Card style={styles.section} variant="outlined">
@@ -171,7 +172,7 @@ const EditCartItemScreen: React.FC<Props> = ({ navigation, route }) => {
           <Button title="Remove Item" variant="outline" onPress={handleRemove} />
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

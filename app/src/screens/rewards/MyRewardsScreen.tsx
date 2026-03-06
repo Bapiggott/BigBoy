@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius } from '../../theme';
 import { Card, LoadingScreen } from '../../components';
@@ -135,7 +136,7 @@ const MyRewardsScreen: React.FC = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       {/* Filter Tabs */}
       <View style={styles.filterContainer}>
         <TouchableOpacity
@@ -182,7 +183,7 @@ const MyRewardsScreen: React.FC = () => {
           </View>
         }
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -219,6 +220,7 @@ const styles = StyleSheet.create({
   listContent: {
     padding: spacing.lg,
     paddingTop: 0,
+    paddingBottom: spacing['4xl'],
   },
   rewardCard: {
     marginBottom: spacing.md,

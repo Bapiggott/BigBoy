@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Animated,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -19,6 +20,7 @@ type ConfirmationNavigation = NativeStackNavigationProp<MenuStackParamList, 'Ord
 const OrderConfirmationScreen = ({ route }: Props) => {
   const { orderId } = route.params;
   const navigation = useNavigation<ConfirmationNavigation>();
+  const insets = useSafeAreaInsets();
   const [orderNumber, setOrderNumber] = useState<string>('');
   const [estimatedTime, setEstimatedTime] = useState<string>('');
 
@@ -67,7 +69,7 @@ const OrderConfirmationScreen = ({ route }: Props) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.content}>
         {/* Success Animation */}
         <Animated.View
@@ -129,7 +131,7 @@ const OrderConfirmationScreen = ({ route }: Props) => {
       </View>
 
       {/* Actions */}
-      <View style={styles.actions}>
+      <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
         <Button
           title="View Order"
           onPress={handleViewOrder}
@@ -142,7 +144,7 @@ const OrderConfirmationScreen = ({ route }: Props) => {
           style={styles.secondaryButton}
         />
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 

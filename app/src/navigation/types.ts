@@ -75,6 +75,11 @@ export type AccountStackParamList = {
   OrderDetail: { orderId: string };
   HelpSupport: undefined;
   Admin: undefined;
+  AdminMenu: undefined;
+  AdminPromos: undefined;
+  AdminDiscounts: undefined;
+  AdminRewards: undefined;
+  AdminUsers: undefined;
 };
 
 // Screen props types

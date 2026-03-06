@@ -17,6 +17,16 @@ export interface LoginResponse {
     email: string;
     firstName: string;
     lastName: string;
+    phone?: string;
+    role: string;
+    loyaltyStatus: {
+      currentPoints: number;
+      lifetimePoints: number;
+      tier: string;
+      pointsToNextTier: number;
+      memberSince: string;
+    };
+    createdAt: string;
   };
 }
 

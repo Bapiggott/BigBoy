@@ -2,6 +2,7 @@
   "expo": {
     "name": "Big Boy",
     "slug": "bigboy-app",
+    "owner": "Bapiggott",
     "scheme": "bigboy",
     "newArchEnabled": false,
     "version": "1.0.0",

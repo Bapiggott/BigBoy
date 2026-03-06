@@ -20,6 +20,7 @@ console.log('[GoogleAuth] Configuration:', {
 
 export interface GoogleAuthResult {
   type: 'success' | 'error' | 'cancel';
+  idToken?: string;
   code?: string;
   codeVerifier?: string;
   redirectUri?: string;
@@ -64,17 +65,28 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
   }, [androidClientPrefix]);
 
   // Build the redirect URI based on environment
+  const proxyProjectName = useMemo(() => {
+    const owner = Constants.expoConfig?.owner;
+    const slug = Constants.expoConfig?.slug;
+    if (!owner || !slug) return undefined;
+    return `@${owner}/${slug}`;
+  }, []);
+
+  const proxyRedirectUri = useMemo(() => {
+    if (!proxyProjectName) return undefined;
+    return `https://auth.expo.io/${proxyProjectName}`;
+  }, [proxyProjectName]);
+
   const redirectUri = isExpoGo
-    ? AuthSession.makeRedirectUri({
-        useProxy: true,
-        projectNameForProxy: 'ojazaerly/bigboy-app',
-      })
+    ? proxyRedirectUri ?? AuthSession.makeRedirectUri({ useProxy: true })
     : nativeRedirectUri;
 
   const isConfigured = isExpoGo ? !!GOOGLE_WEB_CLIENT_ID : !!GOOGLE_ANDROID_CLIENT_ID && !!nativeRedirectUri;
   const clientId = isExpoGo ? GOOGLE_WEB_CLIENT_ID : GOOGLE_ANDROID_CLIENT_ID;
 
   console.log('[GoogleAuth] Redirect URI:', redirectUri);
+  console.log('[GoogleAuth] Proxy project:', proxyProjectName ?? 'missing');
+  console.log('[GoogleAuth] Proxy redirect:', proxyRedirectUri ?? 'missing');
   console.log('[GoogleAuth] Is Expo Go:', isExpoGo);
 
   // Configure Google auth request
@@ -85,10 +97,11 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
     androidClientId: GOOGLE_ANDROID_CLIENT_ID,
     // iOS client ID for iOS builds (if present)
     iosClientId: GOOGLE_IOS_CLIENT_ID,
-    // Authorization Code + PKCE for dev client
-    responseType: AuthSession.ResponseType.Code,
-    usePKCE: true,
-    codeChallengeMethod: AuthSession.CodeChallengeMethod.S256,
+    // Expo Go: request id_token directly via proxy to avoid server-side code exchange issues
+    // Dev build: use authorization code + PKCE
+    responseType: isExpoGo ? AuthSession.ResponseType.IdToken : AuthSession.ResponseType.Code,
+    usePKCE: !isExpoGo,
+    codeChallengeMethod: !isExpoGo ? AuthSession.CodeChallengeMethod.S256 : undefined,
     scopes: ['openid', 'profile', 'email'],
     redirectUri: redirectUri || undefined,
     shouldAutoExchangeCode: false,
@@ -135,10 +148,11 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       });
 
       if (result.type === 'success') {
-        const { code } = result.params;
+        const { code, id_token: idToken } = result.params;
         const codeVerifier = request?.codeVerifier;
 
-        console.log('[GoogleAuth] Success! Code received:', {
+        console.log('[GoogleAuth] Success! Auth payload received:', {
+          hasIdToken: !!idToken,
           hasCode: !!code,
           codePrefix: code ? code.slice(0, 8) : undefined,
           hasCodeVerifier: !!codeVerifier,
@@ -146,6 +160,7 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
 
         return {
           type: 'success',
+          idToken,
           code,
           codeVerifier,
           redirectUri,

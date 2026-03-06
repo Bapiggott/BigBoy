@@ -9,7 +9,7 @@ import {
   StyleProp,
   ImageStyle,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { colors, typography, spacing, borderRadius, shadows } from '../../theme';
@@ -46,6 +46,7 @@ const CartItemImage: React.FC<{ image?: string; style?: StyleProp<ImageStyle> }>
 };
 
 const CartScreen: React.FC<Props> = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const { cart, itemCount, removeItem, updateQuantity, getItemTotal, clearCart } = useCart();
   const { appliedCoupon } = useRewards();
   const { selectedLocation, locations, selectLocation } = useLocation();
@@ -255,13 +256,13 @@ const CartScreen: React.FC<Props> = ({ navigation }) => {
           </Text>
         </View>
 
-          {/* Bottom spacing */}
-          <View style={{ height: 100 }} />
+          {/* Bottom spacing for footer */}
+          <View style={{ height: 100 + insets.bottom }} />
         </ScrollView>
       )}
 
       {itemCount > 0 && (
-        <View style={styles.footer}>
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
           <Button
             title={`Checkout • ${formatPrice(cart.total)}`}
             onPress={handleCheckout}
@@ -492,7 +493,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingHorizontal: spacing.lg,
     backgroundColor: colors.surface,
     borderTopWidth: 1,
     borderTopColor: colors.border.light,

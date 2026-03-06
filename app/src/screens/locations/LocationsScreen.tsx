@@ -8,6 +8,7 @@ import {
   TextInput,
   RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -161,7 +162,7 @@ const LocationsScreen: React.FC = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <OfflineBanner />
 
       {/* Search Bar */}
@@ -206,7 +207,7 @@ const LocationsScreen: React.FC = () => {
           </View>
         }
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -238,6 +239,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: spacing.lg,
+    paddingBottom: spacing['6xl'],
   },
   locationCard: {
     marginBottom: spacing.md,

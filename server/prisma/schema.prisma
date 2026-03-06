@@ -20,6 +20,7 @@ model User {
   passwordHash  String
   firstName     String
   lastName      String
+  role          UserRole  @default(USER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
@@ -152,6 +153,9 @@ model Location {
   updatedAt   DateTime @updatedAt
   
   orders      Order[]
+  menuOverrides LocationMenuOverride[]
+  promoCodes    PromoCodeLocation[]
+  discounts     DiscountLocation[]
   
   @@map("locations")
 }
@@ -168,6 +172,8 @@ model Category {
   isActive    Boolean  @default(true)
   
   items       MenuItem[]
+  promoCodes  PromoCode[]
+  discounts   Discount[]
   
   @@map("categories")
 }
@@ -195,6 +201,9 @@ model MenuItem {
   modifierGroups MenuItemModifierGroup[]
   orderItems  OrderItem[]
   favorites   Favorite[]
+  locationOverrides LocationMenuOverride[]
+  promoCodes  PromoCode[]
+  discounts   Discount[]
   
   @@map("menu_items")
 }
@@ -210,6 +219,19 @@ model Favorite {
 
   @@unique([userId, menuItemId], name: "userId_menuItemId")
   @@map("favorites")
+}
+
+model LocationMenuOverride {
+  id          String   @id @default(uuid())
+  locationId  String
+  menuItemId  String
+  isAvailable Boolean  @default(false)
+  
+  location    Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  menuItem    MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  
+  @@unique([locationId, menuItemId])
+  @@map("location_menu_overrides")
 }
 
 model PasswordResetToken {
@@ -307,6 +329,12 @@ model Order {
   
   specialInstructions String? @db.Text
   
+  // Promo code used
+  promoCodeId     String?
+  promoCode       PromoCode? @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
+  discountId      String?
+  appliedDiscount Discount?  @relation(fields: [discountId], references: [id], onDelete: SetNull)
+  
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   
@@ -357,6 +385,7 @@ model Reward {
   id              String   @id @default(uuid())
   name            String
   description     String   @db.Text
+  imageUrl        String?
   
   pointsCost      Int
   category        RewardCategory
@@ -397,7 +426,123 @@ model UserReward {
   @@map("user_rewards")
 }
 
+// ============ PROMO CODES ============
+
+model PromoCode {
+  id              String   @id @default(uuid())
+  code            String   @unique
+  name            String
+  description     String?  @db.Text
+  
+  // Discount configuration
+  discountType    PromoDiscountType
+  discountValue   Decimal  @db.Decimal(10, 2) // percentage or fixed amount
+  
+  // Template / preset type for quick setup
+  template        PromoTemplate  @default(CUSTOM)
+  
+  // Conditions
+  minOrderAmount  Decimal? @db.Decimal(10, 2)
+  maxDiscount     Decimal? @db.Decimal(10, 2) // cap for percentage discounts
+  applicableItemId String? // for item-specific promos (e.g., BOGO on specific item)
+  applicableItem   MenuItem? @relation(fields: [applicableItemId], references: [id], onDelete: SetNull)
+  applicableCategoryId String? // for category-specific promos
+  applicableCategory   Category? @relation(fields: [applicableCategoryId], references: [id], onDelete: SetNull)
+  
+  // Usage limits
+  maxTotalUses    Int?     // null = unlimited  
+  maxUsesPerUser  Int      @default(1)
+  totalUsed       Int      @default(0)
+  
+  // Validity
+  startsAt        DateTime @default(now())
+  expiresAt       DateTime?
+  isActive        Boolean  @default(true)
+  
+  // Location restrictions (empty = all locations)
+  locations       PromoCodeLocation[]
+  orders          Order[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("promo_codes")
+}
+
+model PromoCodeLocation {
+  promoCodeId String
+  locationId  String
+  
+  promoCode   PromoCode @relation(fields: [promoCodeId], references: [id], onDelete: Cascade)
+  location    Location  @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  
+  @@id([promoCodeId, locationId])
+  @@map("promo_code_locations")
+}
+
+// ============ DISCOUNTS (auto-applied deals, not code-based) ============
+
+model Discount {
+  id              String   @id @default(uuid())
+  name            String
+  description     String?  @db.Text
+  
+  // Discount configuration
+  discountType    PromoDiscountType
+  discountValue   Decimal  @db.Decimal(10, 2)
+  
+  template        PromoTemplate  @default(CUSTOM)
+  
+  // Conditions
+  minOrderAmount  Decimal? @db.Decimal(10, 2)
+  maxDiscount     Decimal? @db.Decimal(10, 2)
+  applicableItemId String?
+  applicableItem   MenuItem? @relation(fields: [applicableItemId], references: [id], onDelete: SetNull)
+  applicableCategoryId String?
+  applicableCategory   Category? @relation(fields: [applicableCategoryId], references: [id], onDelete: SetNull)
+  
+  // Schedule
+  startsAt        DateTime @default(now())
+  expiresAt       DateTime?
+  
+  // Day/time restrictions (e.g., "Taco Tuesday")
+  activeDays      String?  // JSON array of day numbers [0-6] sun-sat, null = all
+  activeTimeStart String?  // "11:00" format, null = all day
+  activeTimeEnd   String?  // "14:00" format
+  
+  // Stacking
+  stackable       Boolean  @default(false) // can combine with other discounts
+  priority        Int      @default(0)     // higher = applied first
+  
+  isActive        Boolean  @default(true)
+  
+  // Location restrictions (empty = all locations)
+  locations       DiscountLocation[]
+  orders          Order[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("discounts")
+}
+
+model DiscountLocation {
+  discountId  String
+  locationId  String
+  
+  discount    Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
+  location    Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  
+  @@id([discountId, locationId])
+  @@map("discount_locations")
+}
+
 // ============ ENUMS ============
+
+enum UserRole {
+  USER
+  ADMIN
+}
 
 enum LoyaltyTier {
   BRONZE
@@ -442,4 +587,25 @@ enum RewardCategory {
   DESSERT
   COMBO
   MERCHANDISE
+}
+
+enum PromoDiscountType {
+  PERCENTAGE        // e.g., 20% off
+  FIXED_AMOUNT      // e.g., $5 off
+  BOGO              // buy one get one free (discountValue = 100 for free, 50 for half off)
+  FREE_ITEM         // specific item free (applicableItemId required)
+  BOGO_CATEGORY     // BOGO within a category
+}
+
+enum PromoTemplate {
+  CUSTOM            // fully custom
+  PERCENT_OFF       // simple % off entire order
+  DOLLAR_OFF        // simple $ off entire order  
+  BOGO_ITEM         // buy one get one on specific item
+  BOGO_CATEGORY_DEAL// BOGO within category
+  FREE_ITEM_DEAL    // get a specific item free
+  HAPPY_HOUR        // time-based discount
+  LOYALTY_BONUS     // extra points multiplier
+  FIRST_ORDER       // first-time customer
+  SEASONAL          // seasonal promotion
 }

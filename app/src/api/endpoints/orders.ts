@@ -8,7 +8,7 @@ import { mockOrders } from '../../data/mockOrders';
  * Currently returns mock data - swap implementation when backend is ready
  */
 
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 /**
  * Get all orders for current user

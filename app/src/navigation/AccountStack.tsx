@@ -14,6 +14,11 @@ import OrderHistoryScreen from '../screens/account/OrderHistoryScreen';
 import OrderDetailScreen from '../screens/orders/OrderDetailScreen';
 import HelpSupportScreen from '../screens/account/HelpSupportScreen';
 import AdminScreen from '../screens/admin/AdminScreen';
+import AdminMenuScreen from '../screens/admin/AdminMenuScreen';
+import AdminPromoScreen from '../screens/admin/AdminPromoScreen';
+import AdminDiscountScreen from '../screens/admin/AdminDiscountScreen';
+import AdminRewardsScreen from '../screens/admin/AdminRewardsScreen';
+import AdminUsersScreen from '../screens/admin/AdminUsersScreen';
 
 const Stack = createNativeStackNavigator<AccountStackParamList>();
 
@@ -85,6 +90,31 @@ const AccountStack: React.FC = () => {
       <Stack.Screen
         name="Admin"
         component={AdminScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AdminMenu"
+        component={AdminMenuScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AdminPromos"
+        component={AdminPromoScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AdminDiscounts"
+        component={AdminDiscountScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AdminRewards"
+        component={AdminRewardsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AdminUsers"
+        component={AdminUsersScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

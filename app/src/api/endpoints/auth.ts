@@ -27,6 +27,7 @@ export const login = async (credentials: LoginRequest): Promise<{ token: string;
         firstName: 'John',
         lastName: 'Doe',
         phone: '(248) 555-1234',
+        role: 'user' as const,
         loyaltyStatus: {
           currentPoints: 785,
           lifetimePoints: 1785,
@@ -48,13 +49,13 @@ export const login = async (credentials: LoginRequest): Promise<{ token: string;
       token: response.data.token,
       user: {
         ...response.data.user,
-        loyaltyStatus: {
+        loyaltyStatus: response.data.user.loyaltyStatus ?? {
           currentPoints: 0,
           lifetimePoints: 0,
           tier: 'bronze',
           memberSince: new Date().toISOString(),
         },
-        createdAt: new Date().toISOString(),
+        createdAt: response.data.user.createdAt ?? new Date().toISOString(),
       },
     };
   }
@@ -78,6 +79,7 @@ export const register = async (data: RegisterRequest): Promise<{ token: string; 
         lastName: data.lastName,
         phone: data.phone,
         birthday: data.birthday,
+        role: 'user' as const,
         loyaltyStatus: {
           currentPoints: 100, // Welcome bonus
           lifetimePoints: 100,
@@ -101,14 +103,14 @@ export const register = async (data: RegisterRequest): Promise<{ token: string; 
         ...response.data.user,
         phone: data.phone,
         birthday: data.birthday,
-        loyaltyStatus: {
+        loyaltyStatus: response.data.user.loyaltyStatus ?? {
           currentPoints: 100,
           lifetimePoints: 100,
           tier: 'bronze',
           pointsToNextTier: 900,
           memberSince: new Date().toISOString(),
         },
-        createdAt: new Date().toISOString(),
+        createdAt: response.data.user.createdAt ?? new Date().toISOString(),
       },
     };
   }
@@ -130,6 +132,7 @@ export const getCurrentUser = async (): Promise<User | null> => {
       lastName: 'Doe',
       phone: '(248) 555-1234',
       birthday: '1985-06-15',
+      role: 'user',
       loyaltyStatus: {
         currentPoints: 785,
         lifetimePoints: 1785,
@@ -141,8 +144,8 @@ export const getCurrentUser = async (): Promise<User | null> => {
     };
   }
 
-  const response = await apiClient.get<User>('/auth/me');
-  return response.success ? response.data ?? null : null;
+  const response = await apiClient.get<{ user: User }>('/auth/me');
+  return response.success && response.data?.user ? response.data.user : null;
 };
 
 /**
@@ -232,6 +235,7 @@ export const googleLogin = async (idToken: string): Promise<{ token: string; use
         email,
         firstName,
         lastName,
+        role: 'user' as const,
         loyaltyStatus: {
           currentPoints: 0,
           lifetimePoints: 0,
@@ -273,6 +277,7 @@ export const googleLoginWithAuthCode = async (payload: {
         email: 'google.user@gmail.com',
         firstName: 'Google',
         lastName: 'User',
+        role: 'user' as const,
         loyaltyStatus: {
           currentPoints: 0,
           lifetimePoints: 0,

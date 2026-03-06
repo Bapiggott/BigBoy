@@ -6,7 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -15,6 +18,7 @@ import { Card, Button } from '../../components';
 import { useCart, useLocation, useUser, useToast } from '../../store';
 import { MenuStackParamList } from '../../navigation/types';
 import * as ordersApi from '../../api/endpoints/orders';
+import { validatePromoCode } from '../../api/endpoints/admin';
 
 type CheckoutNavigation = NativeStackNavigationProp<MenuStackParamList, 'Checkout'>;
 
@@ -27,11 +31,20 @@ const CheckoutScreen: React.FC = () => {
   const { selectedLocation } = useLocation();
   const { user } = useUser();
   const { showToast } = useToast();
+  const insets = useSafeAreaInsets();
 
   const [orderType, setOrderType] = useState<OrderType>('pickup');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tip, setTip] = useState<number>(0);
+
+  // Promo code
+  const [promoCode, setPromoCode] = useState('');
+  const [promoApplied, setPromoApplied] = useState<{ code: string; name: string; discountAmount: number } | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState('');
+
+  const promoDiscount = promoApplied?.discountAmount || 0;
 
   const tipOptions = [
     { label: 'No tip', value: 0 },
@@ -40,7 +53,42 @@ const CheckoutScreen: React.FC = () => {
     { label: '20%', value: Math.round(cart.subtotal * 0.20 * 100) / 100 },
   ];
 
-  const orderTotal = cart.total + tip;
+  const orderTotal = cart.total + tip - promoDiscount;
+
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) return;
+    setPromoLoading(true);
+    setPromoError('');
+    try {
+      const result = await validatePromoCode(
+        promoCode.trim().toUpperCase(),
+        selectedLocation?.id,
+        cart.subtotal,
+      );
+      if (result.valid) {
+        setPromoApplied({
+          code: promoCode.trim().toUpperCase(),
+          name: result.promoCode?.name || promoCode.trim().toUpperCase(),
+          discountAmount: result.discountPreview,
+        });
+        showToast(`Promo applied: -$${result.discountPreview.toFixed(2)}`, 'success');
+      } else {
+        setPromoError('Invalid promo code');
+        setPromoApplied(null);
+      }
+    } catch (error: any) {
+      setPromoError(error.message || 'Failed to validate promo code');
+      setPromoApplied(null);
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setPromoApplied(null);
+    setPromoCode('');
+    setPromoError('');
+  };
 
   const handlePlaceOrder = async () => {
     if (!selectedLocation) {
@@ -69,6 +117,7 @@ const CheckoutScreen: React.FC = () => {
         })),
         orderType,
         tip,
+        promoCode: promoApplied?.code,
       };
 
       const result = await ordersApi.createOrder(orderData);
@@ -88,7 +137,7 @@ const CheckoutScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         {/* Location */}
         <Card style={styles.section}>
@@ -252,6 +301,51 @@ const CheckoutScreen: React.FC = () => {
           </TouchableOpacity>
         </Card>
 
+        {/* Promo Code */}
+        <Card style={styles.section}>
+          <Text style={styles.sectionTitle}>Promo Code</Text>
+          {promoApplied ? (
+            <View style={styles.promoAppliedRow}>
+              <View style={styles.promoAppliedInfo}>
+                <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                <View>
+                  <Text style={styles.promoAppliedCode}>{promoApplied.code}</Text>
+                  <Text style={styles.promoAppliedDiscount}>-${promoApplied.discountAmount.toFixed(2)} off</Text>
+                </View>
+              </View>
+              <TouchableOpacity onPress={handleRemovePromo}>
+                <Ionicons name="close-circle" size={24} color={colors.error} />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              <View style={styles.promoInputRow}>
+                <TextInput
+                  style={styles.promoInput}
+                  value={promoCode}
+                  onChangeText={(t) => { setPromoCode(t.toUpperCase()); setPromoError(''); }}
+                  placeholder="Enter code"
+                  placeholderTextColor={colors.text.tertiary}
+                  autoCapitalize="characters"
+                  editable={!promoLoading}
+                />
+                <TouchableOpacity
+                  style={[styles.promoApplyBtn, (!promoCode.trim() || promoLoading) && styles.promoApplyBtnDisabled]}
+                  onPress={handleApplyPromo}
+                  disabled={!promoCode.trim() || promoLoading}
+                >
+                  {promoLoading ? (
+                    <ActivityIndicator size="small" color={colors.white} />
+                  ) : (
+                    <Text style={styles.promoApplyBtnText}>Apply</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+              {promoError ? <Text style={styles.promoErrorText}>{promoError}</Text> : null}
+            </>
+          )}
+        </Card>
+
         {/* Order Summary */}
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Order Summary</Text>
@@ -263,6 +357,12 @@ const CheckoutScreen: React.FC = () => {
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Discount</Text>
               <Text style={styles.summaryValue}>- ${cart.discount.toFixed(2)}</Text>
+            </View>
+          )}
+          {promoDiscount > 0 && (
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: colors.success }]}>Promo ({promoApplied?.code})</Text>
+              <Text style={[styles.summaryValue, { color: colors.success }]}>- ${promoDiscount.toFixed(2)}</Text>
             </View>
           )}
           <View style={styles.summaryRow}>
@@ -293,7 +393,7 @@ const CheckoutScreen: React.FC = () => {
       </ScrollView>
 
       {/* Place Order Button */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
         <Button
           title={`Place Order • $${orderTotal.toFixed(2)}`}
           onPress={handlePlaceOrder}
@@ -301,7 +401,7 @@ const CheckoutScreen: React.FC = () => {
           disabled={!selectedLocation || cart.items.length === 0}
         />
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -482,6 +582,60 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderTopWidth: 1,
     borderTopColor: colors.border.light,
+  },
+  promoInputRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  promoInput: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border.main,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    ...typography.bodyMedium,
+    color: colors.text.primary,
+  },
+  promoApplyBtn: {
+    backgroundColor: colors.primary.main,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  promoApplyBtnDisabled: {
+    opacity: 0.5,
+  },
+  promoApplyBtnText: {
+    ...typography.labelMedium,
+    color: colors.white,
+    fontWeight: '600',
+  },
+  promoErrorText: {
+    ...typography.bodySmall,
+    color: colors.error,
+    marginTop: spacing.xs,
+  },
+  promoAppliedRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  promoAppliedInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  promoAppliedCode: {
+    ...typography.labelMedium,
+    color: colors.success,
+    fontWeight: '600',
+  },
+  promoAppliedDiscount: {
+    ...typography.bodySmall,
+    color: colors.success,
   },
 });
 

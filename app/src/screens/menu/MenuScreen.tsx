@@ -517,7 +517,7 @@ const styles = StyleSheet.create({
   },
   categoryTabTextActive: { color: colors.white, fontWeight: '700' },
 
-  menuItemsContainer: { padding: spacing.lg, paddingTop: spacing.sm },
+  menuItemsContainer: { padding: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing['6xl'] },
   menuItemsRow: { justifyContent: 'space-between', marginBottom: spacing.md },
 
   menuItemCard: { width: '48%', marginBottom: spacing.sm },

@@ -28,6 +28,7 @@ const createOrderSchema = z.object({
   specialInstructions: z.string().optional(),
   tip: z.number().min(0).optional(),
   redeemPoints: z.number().int().min(0).optional(),
+  promoCode: z.string().optional(), // promo code string
 });
 
 const TAX_RATE = 0.06;
@@ -127,16 +128,75 @@ router.post('/', optionalAuth, async (req: AuthenticatedRequest, res: Response, 
     const tip = data.tip || 0;
     let discount = 0;
     let pointsRedeemed = 0;
+    let promoCodeId: string | null = null;
     
-    // Handle points redemption
+    // Handle promo code
+    if (data.promoCode) {
+      const promo = await prisma.promoCode.findUnique({
+        where: { code: data.promoCode.toUpperCase() },
+        include: {
+          locations: true,
+          applicableItem: true,
+        },
+      });
+
+      if (promo && promo.isActive) {
+        const now = new Date();
+        const notExpired = !promo.expiresAt || now <= promo.expiresAt;
+        const started = promo.startsAt <= now;
+        const withinLimit = !promo.maxTotalUses || promo.totalUsed < promo.maxTotalUses;
+        const locationOk = promo.locations.length === 0 || promo.locations.some(l => l.locationId === data.locationId);
+        const minOk = !promo.minOrderAmount || subtotal >= Number(promo.minOrderAmount);
+
+        if (notExpired && started && withinLimit && locationOk && minOk) {
+          switch (promo.discountType) {
+            case 'PERCENTAGE':
+              discount = subtotal * (Number(promo.discountValue) / 100);
+              if (promo.maxDiscount) discount = Math.min(discount, Number(promo.maxDiscount));
+              break;
+            case 'FIXED_AMOUNT':
+              discount = Math.min(Number(promo.discountValue), subtotal);
+              break;
+            case 'FREE_ITEM':
+              if (promo.applicableItem) {
+                discount = Number(promo.applicableItem.price);
+              }
+              break;
+            case 'BOGO':
+              if (promo.applicableItem) {
+                discount = Number(promo.applicableItem.price) * (Number(promo.discountValue) / 100);
+              }
+              break;
+            case 'BOGO_CATEGORY':
+              // Find cheapest item in that category from order
+              if (promo.applicableCategoryId) {
+                const catItems = orderItems.filter(oi => {
+                  const mi = menuItems.find(m => m.id === oi.menuItemId);
+                  return mi?.categoryId === promo.applicableCategoryId;
+                });
+                if (catItems.length >= 2) {
+                  const cheapest = Math.min(...catItems.map(i => i.unitPrice));
+                  discount = cheapest * (Number(promo.discountValue) / 100);
+                }
+              }
+              break;
+          }
+          discount = Math.round(discount * 100) / 100;
+          promoCodeId = promo.id;
+        }
+      }
+    }
+    
+    // Handle points redemption (additive with promo)
     if (req.user && data.redeemPoints && data.redeemPoints > 0) {
       const user = await prisma.user.findUnique({
         where: { id: req.user.userId },
       });
       
       if (user && user.loyaltyPoints >= data.redeemPoints) {
-        discount = Math.min(data.redeemPoints / 100, subtotal);
-        pointsRedeemed = Math.floor(discount * 100);
+        const pointsDiscount = Math.min(data.redeemPoints / 100, subtotal - discount);
+        discount += pointsDiscount;
+        pointsRedeemed = Math.floor(pointsDiscount * 100);
       }
     }
     
@@ -176,6 +236,7 @@ router.post('/', optionalAuth, async (req: AuthenticatedRequest, res: Response, 
           pointsEarned,
           pointsRedeemed,
           specialInstructions: data.specialInstructions,
+          promoCodeId,
           items: {
             create: orderItems.map(item => ({
               menuItemId: item.menuItemId,
@@ -208,6 +269,14 @@ router.post('/', optionalAuth, async (req: AuthenticatedRequest, res: Response, 
             loyaltyPoints: { increment: pointsEarned - pointsRedeemed },
             lifetimePoints: { increment: pointsEarned },
           },
+        });
+      }
+
+      // Increment promo code usage
+      if (promoCodeId) {
+        await tx.promoCode.update({
+          where: { id: promoCodeId },
+          data: { totalUsed: { increment: 1 } },
         });
       }
       
@@ -444,5 +513,138 @@ function formatOrder(order: {
     location: order.location,
   };
 }
+
+// ============================================================
+// PROMO CODE VALIDATION (public, used during checkout)
+// ============================================================
+
+/**
+ * POST /api/orders/validate-promo
+ * Validates a promo code and returns discount info
+ */
+router.post('/validate-promo', optionalAuth, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const { code, locationId, subtotal } = z.object({
+      code: z.string().min(1),
+      locationId: z.string().optional(),
+      subtotal: z.number().min(0).optional(),
+    }).parse(req.body);
+
+    const promo = await prisma.promoCode.findUnique({
+      where: { code: code.toUpperCase() },
+      include: {
+        locations: true,
+        applicableItem: { select: { id: true, name: true, price: true } },
+        applicableCategory: { select: { id: true, name: true } },
+      },
+    });
+
+    if (!promo) {
+      res.status(404).json({ error: 'Invalid promo code' });
+      return;
+    }
+
+    if (!promo.isActive) {
+      res.status(400).json({ error: 'This promo code is no longer active' });
+      return;
+    }
+
+    // Check expiry
+    if (promo.expiresAt && new Date() > promo.expiresAt) {
+      res.status(400).json({ error: 'This promo code has expired' });
+      return;
+    }
+
+    // Check start date
+    if (promo.startsAt > new Date()) {
+      res.status(400).json({ error: 'This promo code is not yet active' });
+      return;
+    }
+
+    // Check total usage
+    if (promo.maxTotalUses && promo.totalUsed >= promo.maxTotalUses) {
+      res.status(400).json({ error: 'This promo code has reached its usage limit' });
+      return;
+    }
+
+    // Check per-user usage
+    if (req.user && promo.maxUsesPerUser) {
+      const userUses = await prisma.order.count({
+        where: { userId: req.user.userId, promoCodeId: promo.id },
+      });
+      if (userUses >= promo.maxUsesPerUser) {
+        res.status(400).json({ error: 'You have already used this promo code' });
+        return;
+      }
+    }
+
+    // Check location
+    if (locationId && promo.locations.length > 0) {
+      const locationAllowed = promo.locations.some(l => l.locationId === locationId);
+      if (!locationAllowed) {
+        res.status(400).json({ error: 'This promo code is not available at this location' });
+        return;
+      }
+    }
+
+    // Check min order amount
+    if (promo.minOrderAmount && subtotal && subtotal < Number(promo.minOrderAmount)) {
+      res.status(400).json({
+        error: `Minimum order of $${Number(promo.minOrderAmount).toFixed(2)} required`,
+      });
+      return;
+    }
+
+    // Calculate discount preview
+    let discountPreview = 0;
+    const orderSubtotal = subtotal || 0;
+
+    switch (promo.discountType) {
+      case 'PERCENTAGE':
+        discountPreview = orderSubtotal * (Number(promo.discountValue) / 100);
+        if (promo.maxDiscount) {
+          discountPreview = Math.min(discountPreview, Number(promo.maxDiscount));
+        }
+        break;
+      case 'FIXED_AMOUNT':
+        discountPreview = Math.min(Number(promo.discountValue), orderSubtotal);
+        break;
+      case 'FREE_ITEM':
+        if (promo.applicableItem) {
+          discountPreview = Number(promo.applicableItem.price);
+        }
+        break;
+      case 'BOGO':
+        if (promo.applicableItem) {
+          discountPreview = Number(promo.applicableItem.price) * (Number(promo.discountValue) / 100);
+        }
+        break;
+      case 'BOGO_CATEGORY':
+        // Can't calculate without knowing items; show potential
+        discountPreview = 0;
+        break;
+    }
+
+    res.json({
+      valid: true,
+      promoCode: {
+        id: promo.id,
+        code: promo.code,
+        name: promo.name,
+        description: promo.description,
+        discountType: promo.discountType,
+        discountValue: Number(promo.discountValue),
+        template: promo.template,
+        applicableItem: promo.applicableItem,
+        applicableCategory: promo.applicableCategory,
+        minOrderAmount: promo.minOrderAmount ? Number(promo.minOrderAmount) : null,
+        maxDiscount: promo.maxDiscount ? Number(promo.maxDiscount) : null,
+      },
+      discountPreview: Math.round(discountPreview * 100) / 100,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 export default router;

@@ -31,7 +31,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
-  const { login, googleLoginWithAuthCode } = useUser();
+  const { login, googleLogin, googleLoginWithAuthCode } = useUser();
   const { showToast } = useToast();
   const {
     promptAsync,
@@ -76,11 +76,19 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
       console.log('[LoginScreen] Google Auth result:', {
         type: result.type,
+        hasIdToken: !!result.idToken,
         hasCode: !!result.code,
         hasCodeVerifier: !!result.codeVerifier,
       });
 
-      if (result.type === 'success' && result.code && result.codeVerifier && result.redirectUri) {
+      if (result.type === 'success' && result.idToken) {
+        const success = await googleLogin(result.idToken);
+        if (success) {
+          showToast('Welcome!', 'success');
+        } else {
+          showToast('Failed to sign in with Google', 'error');
+        }
+      } else if (result.type === 'success' && result.code && result.codeVerifier && result.redirectUri) {
         const { success, error } = await googleLoginWithAuthCode({
           code: result.code,
           codeVerifier: result.codeVerifier,

@@ -55,6 +55,9 @@ const AccountScreen: React.FC = () => {
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleVersionPress = () => {
+    // Only allow admin access for admin users
+    if (user?.role !== 'admin') return;
+
     longPressCount.current += 1;
     
     if (longPressTimer.current) {
@@ -217,6 +220,45 @@ const AccountScreen: React.FC = () => {
           />
         </Card>
       </View>
+
+      {/* Admin Section - visible only to admin users */}
+      {isAuthenticated && user?.role === 'admin' && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Admin</Text>
+          <Card padding="none">
+            <MenuItem
+              icon="construct-outline"
+              label="Admin Tools"
+              onPress={() => navigation.navigate('Admin')}
+            />
+            <MenuItem
+              icon="restaurant-outline"
+              label="Menu Management"
+              onPress={() => navigation.navigate('AdminMenu')}
+            />
+            <MenuItem
+              icon="pricetag-outline"
+              label="Promo Codes"
+              onPress={() => navigation.navigate('AdminPromos')}
+            />
+            <MenuItem
+              icon="pricetags-outline"
+              label="Discounts & Deals"
+              onPress={() => navigation.navigate('AdminDiscounts')}
+            />
+            <MenuItem
+              icon="trophy-outline"
+              label="Rewards"
+              onPress={() => navigation.navigate('AdminRewards')}
+            />
+            <MenuItem
+              icon="people-outline"
+              label="User Management"
+              onPress={() => navigation.navigate('AdminUsers')}
+            />
+          </Card>
+        </View>
+      )}
 
       {/* Sign Out */}
       {isAuthenticated && (

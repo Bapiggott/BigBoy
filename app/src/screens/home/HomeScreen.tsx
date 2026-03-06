@@ -9,6 +9,8 @@ import {
   Image,
   RefreshControl,
   FlatList,
+  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,6 +32,10 @@ const HomeScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const scrollRef = useRef<ScrollView>(null);
   const { selectedLocation, locations, selectLocation } = useLocation();
+  const { width: screenWidth } = useWindowDimensions();
+  const cardWidth = Math.min(screenWidth * 0.42, 180);
+  const cardImageHeight = cardWidth * 0.68;
+  const newsCardWidth = screenWidth - spacing.lg * 2;
 
   const [isLocationModalVisible, setLocationModalVisible] = useState(false);
   const [newItems, setNewItems] = useState<MenuItem[]>([]);
@@ -143,7 +149,7 @@ const HomeScreen: React.FC = () => {
 
   const renderNewsCard = ({ item }: { item: typeof NEWS_ITEMS[number] }) => (
     <TouchableOpacity
-      style={styles.newsCard}
+      style={[styles.newsCard, { width: newsCardWidth }]}
       onPress={() => handleNewsPress(item.id)}
       activeOpacity={0.9}
     >
@@ -179,13 +185,13 @@ const HomeScreen: React.FC = () => {
     const isPlaceholder = failedImages[item.id] || imageSource === MENU_IMAGE_PLACEHOLDER;
     return (
       <TouchableOpacity
-        style={styles.newItemCard}
+        style={[styles.newItemCard, { width: cardWidth }]}
         onPress={() => handleOpenMenuItem(item.id)}
       >
-        <View style={styles.newItemImageWrap}>
+        <View style={[styles.newItemImageWrap, { height: cardImageHeight }]}>
           <Image
             source={imageSource}
-            style={styles.newItemImage}
+            style={[styles.newItemImage, { height: cardImageHeight }]}
             resizeMode={isPlaceholder ? 'contain' : 'cover'}
             onError={() => setFailedImages((prev) => ({ ...prev, [item.id]: true }))}
           />
@@ -208,9 +214,9 @@ const HomeScreen: React.FC = () => {
   ];
 
   const placeholderCards = placeholderItems.map((item) => (
-    <View key={item.key} style={styles.newItemCard}>
-      <View style={styles.newItemImageWrap}>
-        <Image source={BRAND_LOGO} style={styles.newItemImage} resizeMode="contain" />
+    <View key={item.key} style={[styles.newItemCard, { width: cardWidth }]}>
+      <View style={[styles.newItemImageWrap, { height: cardImageHeight }]}>
+        <Image source={BRAND_LOGO} style={[styles.newItemImage, { height: cardImageHeight }]} resizeMode="contain" />
       </View>
       <View style={styles.newItemInfo}>
         <Text style={styles.newItemName}>{item.title}</Text>
@@ -354,7 +360,7 @@ const HomeScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing['4xl'] },
+  content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing['6xl'] },
   banner: { height: 200, borderRadius: borderRadius.lg, overflow: 'hidden' },
   bannerImage: { borderRadius: borderRadius.lg },
   bannerOverlay: {
@@ -374,7 +380,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { ...typography.titleLarge, color: colors.text.primary },
   sectionAction: { ...typography.labelLarge, color: colors.primary.main },
-  newsCard: { width: 320, marginRight: spacing.md },
+  newsCard: { marginRight: spacing.md },
   newsImage: { height: 180, borderRadius: borderRadius.lg, overflow: 'hidden' },
   newsImageStyle: { borderRadius: borderRadius.lg },
   newsOverlay: {
@@ -409,21 +415,19 @@ const styles = StyleSheet.create({
   newsCtaText: { ...typography.labelSmall, color: colors.white, fontWeight: '700' },
   newItemsRow: { gap: spacing.md, paddingRight: spacing.lg },
   newItemCard: {
-    width: 160,
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     overflow: 'hidden',
     ...shadows.sm,
   },
   newItemImageWrap: {
-    height: 110,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border.light,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  newItemImage: { width: '100%', height: 110 },
+  newItemImage: { width: '100%' },
   newItemInfo: { padding: spacing.md },
   newItemName: { ...typography.titleSmall, color: colors.text.primary, marginBottom: spacing.xs },
   newItemPrice: { ...typography.labelLarge, color: colors.primary.main, fontWeight: '700' },

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { colors, typography, spacing, borderRadius } from '../../theme';
@@ -12,6 +13,7 @@ type Props = NativeStackScreenProps<RewardsStackParamList, 'PromoDetail'>;
 
 const PromoDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const promo = PROMOS.find((p) => p.id === route.params.promoId);
+  const insets = useSafeAreaInsets();
 
   if (!promo) {
     return (
@@ -28,7 +30,7 @@ const PromoDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
         <Image source={promo.image} style={styles.hero} resizeMode="cover" />
         <Text style={styles.title}>{promo.title}</Text>
@@ -52,10 +54,10 @@ const PromoDetailScreen: React.FC<Props> = ({ route, navigation }) => {
         {promo.terms ? <Text style={styles.terms}>{promo.terms}</Text> : null}
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
         <Button title="Back to Rewards" onPress={() => navigation.goBack()} />
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 

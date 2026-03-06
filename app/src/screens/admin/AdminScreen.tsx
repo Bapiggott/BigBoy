@@ -35,7 +35,7 @@ const AdminScreen: React.FC<Props> = ({ navigation }) => {
   const { showToast } = useToast();
   
   const [forceOffline, setForceOffline] = useState(false);
-  const [useMockData, setUseMockData] = useState(true);
+  const [useMockData, setUseMockData] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
   const [pointsToAdd, setPointsToAdd] = useState('');
   const [stats, setStats] = useState<AppStats>({
@@ -59,7 +59,7 @@ const AdminScreen: React.FC<Props> = ({ navigation }) => {
       
       if (settings) {
         setForceOffline(settings.forceOffline ?? false);
-        setUseMockData(settings.useMockData ?? true);
+        setUseMockData(settings.useMockData ?? false);
         setDebugMode(settings.debugMode ?? false);
       }
     } catch (error) {
@@ -200,6 +200,22 @@ const AdminScreen: React.FC<Props> = ({ navigation }) => {
           )}
         </Card>
 
+        {/* Admin Actions */}
+        <Card style={styles.card}>
+          <Text style={styles.cardTitle}>Admin Actions</Text>
+          <TouchableOpacity
+            style={styles.adminAction}
+            onPress={() => navigation.navigate('AdminMenu')}
+          >
+            <Ionicons name="restaurant-outline" size={24} color={colors.primary.main} />
+            <View style={styles.adminActionInfo}>
+              <Text style={styles.adminActionTitle}>Menu Management</Text>
+              <Text style={styles.adminActionDescription}>Add, edit, or remove menu items</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.text.tertiary} />
+          </TouchableOpacity>
+        </Card>
+
         {/* Points Management */}
         {user && (
           <Card style={styles.card}>
@@ -238,23 +254,6 @@ const AdminScreen: React.FC<Props> = ({ navigation }) => {
               onValueChange={toggleForceOffline}
               trackColor={{ false: colors.lightGray, true: colors.warning }}
               thumbColor={forceOffline ? colors.white : colors.mediumGray}
-            />
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.settingRow}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Use Mock Data</Text>
-              <Text style={styles.settingDescription}>
-                Bypass API calls with mock responses
-              </Text>
-            </View>
-            <Switch
-              value={useMockData}
-              onValueChange={setUseMockData}
-              trackColor={{ false: colors.lightGray, true: colors.primary.light }}
-              thumbColor={useMockData ? colors.primary.main : colors.mediumGray}
             />
           </View>
 
@@ -405,6 +404,24 @@ const styles = StyleSheet.create({
     ...typography.bodyMedium,
     color: colors.white,
     opacity: 0.7,
+  },
+  adminAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    gap: spacing.md,
+  },
+  adminActionInfo: {
+    flex: 1,
+  },
+  adminActionTitle: {
+    ...typography.titleSmall,
+    color: colors.text.primary,
+  },
+  adminActionDescription: {
+    ...typography.bodySmall,
+    color: colors.text.secondary,
+    marginTop: spacing.xxs,
   },
   pointsRow: {
     flexDirection: 'row',

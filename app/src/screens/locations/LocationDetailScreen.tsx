@@ -8,6 +8,7 @@ import {
   Linking,
   Platform,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -34,6 +35,7 @@ const LocationDetailScreen = ({ route }: Props) => {
   const navigation = useNavigation();
   const { selectedLocation, selectLocation } = useLocation();
   const { showToast } = useToast();
+  const insets = useSafeAreaInsets();
 
   const [location, setLocation] = useState<Location | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -110,7 +112,7 @@ const LocationDetailScreen = ({ route }: Props) => {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         {/* Status Badge */}
         <View style={[styles.statusBadge, isOpen ? styles.statusOpen : styles.statusClosed]}>
@@ -232,7 +234,7 @@ const LocationDetailScreen = ({ route }: Props) => {
       </ScrollView>
 
       {/* Select Button */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
         <Button
           title={isSelected ? 'Currently Selected' : 'Select This Location'}
           onPress={handleSelectLocation}
@@ -240,7 +242,7 @@ const LocationDetailScreen = ({ route }: Props) => {
           disabled={isSelected}
         />
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
